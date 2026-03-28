@@ -87,12 +87,9 @@ st.markdown("""
     padding: 12px 16px; font-size: 13px; color: #92400E;
   }
 
-  /* Sidebar nav links */
-  .staff-link {
-    display: inline-block; background: rgba(255,255,255,.15);
-    color: white; padding: 8px 16px; border-radius: 8px; font-size: 13px;
-    font-weight: 600; text-decoration: none;
-  }
+  /* Hide the Streamlit sidebar page navigation on the student page
+     (students should not see or navigate to the Staff Dashboard) */
+  [data-testid="stSidebarNav"] { display: none !important; }
 
   div[data-testid="stButton"] > button[kind="primary"] {
     background: #2563EB; border-radius: 10px;
@@ -127,19 +124,17 @@ for key, val in {
 st.markdown("""
 <div class="app-header">
   <div>
-    <h1> CampusInnovate</h1>
+    <h1>CampusInnovate</h1>
     <p>AI-Assisted Campus Issue Reporting — National University of Singapore</p>
   </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Navigation links
-col_nav1, col_nav2, col_nav3 = st.columns([1, 1, 4])
+# Navigation — Track button only (staff dashboard is staff-only, accessed via its own URL)
+col_nav1, col_nav2 = st.columns([1, 5])
 with col_nav1:
-    if st.button(" Track my report", use_container_width=True):
+    if st.button("Track my report", use_container_width=True):
         st.session_state.show_tracking = not st.session_state.show_tracking
-with col_nav2:
-    st.page_link("pages/1_Staff_Dashboard.py", label="Staff Dashboard →")
 
 st.divider()
 
@@ -154,21 +149,17 @@ if st.session_state.last_submitted:
       <p style="opacity:.85">Received and awaiting staff review.</p>
       <div class="report-id">{r['report_id']}</div>
       <p style="opacity:.75;font-size:13px">Save this ID to track your report status</p>
-      <p style="font-size:14px">
-         AI classified as <strong>{r.get('ai_category','—')}</strong>
-        &nbsp;•&nbsp;  <strong>{r.get('ai_urgency','—')}</strong> urgency
-      </p>
     </div>
     """, unsafe_allow_html=True)
     if r.get("is_duplicate"):
         st.markdown(f"""
         <div class="duplicate-warn" style="margin-top:12px">
-           <strong>Possible duplicate detected.</strong>
+          ⚠️ <strong>Possible duplicate detected.</strong>
           Your report may be related to an existing issue in this area.
           Original: <code>{r.get('original_report_id','—')}</code>
         </div>
         """, unsafe_allow_html=True)
-    if st.button(" Submit another report", use_container_width=True):
+    if st.button("Submit another report", use_container_width=True):
         st.session_state.last_submitted = None
         st.rerun()
     st.stop()
@@ -177,7 +168,7 @@ if st.session_state.last_submitted:
 if st.session_state.show_tracking:
     with st.container():
         st.markdown('<div class="section-card">', unsafe_allow_html=True)
-        st.markdown("###  Track Your Report")
+        st.markdown("### 📋 Track Your Report")
         track_id = st.text_input("Enter your Report ID", placeholder="e.g. CI-2026-A3F7",
                                   key="track_input").strip().upper()
         if st.button("Check Status", key="track_btn"):
@@ -220,7 +211,7 @@ with left_col:
     st.markdown('<div class="section-sub">Click anywhere on the NUS campus map to set your issue location</div>', unsafe_allow_html=True)
 
     # OneMap search
-    search_q = st.text_input("🔍 Search campus location", placeholder="e.g. COM2, Central Library, UTown…", label_visibility="collapsed")
+    search_q = st.text_input("Search campus location", placeholder="e.g. COM2, Central Library, UTown…", label_visibility="collapsed")
 
     search_lat, search_lng, search_name = None, None, None
     if search_q and len(search_q) >= 2:
@@ -254,7 +245,7 @@ with left_col:
     map_center = NUS_CENTER
     zoom_start = 16
 
-    # If a location is selected, centre on it
+    # If a location is already selected, centre on it
     if st.session_state.selected_lat:
         map_center = [st.session_state.selected_lat, st.session_state.selected_lng]
         zoom_start = 18
@@ -266,6 +257,21 @@ with left_col:
     folium.TileLayer(
         tiles=ONEMAP_TILES, attr=ONEMAP_ATTR,
         name="OneMap", min_zoom=11, max_zoom=19,
+    ).add_to(m)
+
+    # ── Geolocation button (Fix 2) ─────────────────────────────────────────
+    # Adds a "locate me" button to the map that uses the browser's GPS.
+    # When clicked, it centres the map on the user and drops a blue marker.
+    # The user can then still click anywhere to adjust the pin manually.
+    from folium.plugins import LocateControl
+    LocateControl(
+        auto_start=False,          # Don't auto-trigger — wait for user to tap the button
+        position="topright",
+        strings={"title": "Use my current location"},
+        flyTo=True,
+        keepCurrentZoomLevel=False,
+        drawCircle=True,
+        drawMarker=True,
     ).add_to(m)
 
     # Show selected marker
@@ -304,16 +310,14 @@ with left_col:
         st.success(f"📍 **Selected:** {st.session_state.selected_location}  \n"
                    f"`{st.session_state.selected_lat:.5f}°N, {st.session_state.selected_lng:.5f}°E`")
     else:
-        st.info(" Click on the map to select your issue location")
+        st.info("Click on the map to select your issue location, or tap 📍 to use your current location")
 
-    # Legend
-    st.markdown("**Map legend:** 🔴 High urgency &nbsp;&nbsp; 🟠 Medium &nbsp;&nbsp; 🟡 Low urgency")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ── RIGHT: Report Form ─────────────────────────────────────────────────────────
 with right_col:
     st.markdown('<div class="section-card">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">📝 Report an Issue</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title"> Report an Issue</div>', unsafe_allow_html=True)
     st.markdown('<div class="section-sub">Fill in the details below and submit</div>', unsafe_allow_html=True)
 
     with st.form("report_form", clear_on_submit=True):
@@ -330,13 +334,13 @@ with right_col:
         st.text_input("📍 Location (select on map)", value=loc_display, disabled=True)
 
         # Category
-        category = st.selectbox("🏷️ Category", [
+        category = st.selectbox("Category", [
             "Accessibility", "Facilities", "Safety",
             "Cleanliness", "Utilities", "Other",
         ])
 
         # Description
-        description = st.text_area(" Description (optional)",
+        description = st.text_area("Description (optional)",
                                     placeholder="Briefly describe the issue…",
                                     max_chars=200,
                                     help="Max 200 characters")
