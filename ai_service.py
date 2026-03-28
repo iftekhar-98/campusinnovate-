@@ -12,17 +12,34 @@ from PIL import Image
 
 
 def _get_model():
-    # Try Streamlit secrets first, then environment variable
+    """
+    Load API key from Streamlit secrets (preferred) or environment variable.
+    Raises EnvironmentError with a clear message if the key is missing.
+    Raises any other exception as-is so callers can log the real cause.
+    """
+    key = ""
+
+    # 1. Try Streamlit secrets (works on Streamlit Cloud and local with secrets.toml)
     try:
         import streamlit as st
-        key = st.secrets.get("GEMINI_API_KEY", "")
-    except Exception:
-        key = ""
+        # Use dict-style access — more reliable than .get() across Streamlit versions
+        if "GEMINI_API_KEY" in st.secrets:
+            key = st.secrets["GEMINI_API_KEY"]
+    except Exception as e:
+        # Only swallow "secrets not available" errors, not key-found-but-bad errors
+        print(f"[ai_service] st.secrets not available: {e}")
+
+    # 2. Fall back to OS environment variable
     if not key:
         key = os.getenv("GEMINI_API_KEY", "")
+
     if not key:
-        raise EnvironmentError("No GEMINI_API_KEY found.")
+        raise EnvironmentError(
+            "GEMINI_API_KEY not found. Add it in Streamlit Cloud → App settings → Secrets."
+        )
+
     genai.configure(api_key=key)
+    # gemini-1.5-flash is stable and free-tier friendly
     return genai.GenerativeModel("gemini-1.5-flash")
 
 
@@ -82,22 +99,27 @@ Urgency: High=safety/water/access hazards. Medium=facility faults affecting serv
     try:
         response = model.generate_content(parts)
         text = response.text.strip()
+        # Strip accidental markdown code fences Gemini sometimes adds
         if "```" in text:
             text = text.split("```")[1]
             if text.lower().startswith("json"):
                 text = text[4:]
         result = json.loads(text.strip())
-        result.setdefault("ai_category",       category)
-        result.setdefault("ai_confidence",     0.75)
-        result.setdefault("ai_urgency",        "Medium")
-        result.setdefault("ai_summary",        "")
-        result.setdefault("ai_urgency_reason", "")
-        result.setdefault("is_duplicate",      False)
+        result.setdefault("ai_category",        category)
+        result.setdefault("ai_confidence",      0.75)
+        result.setdefault("ai_urgency",         "Medium")
+        result.setdefault("ai_summary",         "")
+        result.setdefault("ai_urgency_reason",  "")
+        result.setdefault("is_duplicate",       False)
         result.setdefault("original_report_id", None)
         result["ai_confidence"] = float(result["ai_confidence"])
+        result["ai_urgency_reason"] = result["ai_urgency_reason"].replace(
+            "Classified by rule-based fallback (add Gemini API key for full AI).", ""
+        ).strip()
         return result
     except Exception as e:
-        print(f"Gemini error: {e}")
+        # Log the real error so it appears in Streamlit Cloud logs
+        print(f"[ai_service] Gemini generate/parse error: {type(e).__name__}: {e}")
         return _fallback(category, description, location_name)
 
 
