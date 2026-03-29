@@ -1,17 +1,13 @@
 """
-ai_service.py — Gemini AI for CampusInnovate (Streamlit version)
+ai_service.py — CampusInnovate AI Service (Groq / Llama 3.3)
 
-The API key is passed in directly from streamlit_app.py where st.secrets
-is guaranteed to be available. This module never touches st.secrets itself,
-which avoids silent failures caused by module-level import ordering on
-Streamlit Cloud.
+Uses Groq's free API with Llama 3.3-70b for issue classification.
+The api_key is passed in from streamlit_app.py where st.secrets is reliable.
 """
 
 import json
-import io
 import os
-import google.generativeai as genai
-from PIL import Image
+from groq import Groq
 
 
 def analyze_report(
@@ -23,19 +19,9 @@ def analyze_report(
     api_key: str = "",
 ) -> dict:
     """
-    Analyse a campus issue report with Gemini AI.
+    Analyse a campus issue report using Groq (Llama 3.3-70b).
 
-    Parameters
-    ----------
-    category        : User-selected category string
-    description     : Free-text description (may be empty)
-    location_name   : Human-readable location label
-    image_bytes     : Raw bytes of an uploaded photo (optional)
-    nearby_reports  : List of recent nearby report dicts for duplicate detection
-    api_key         : Gemini API key — pass st.secrets["GEMINI_API_KEY"] from the
-                      main Streamlit app. Falls back to GEMINI_API_KEY env var if empty.
-
-    Returns a dict with keys:
+    Returns a dict with:
         ai_category, ai_confidence, ai_urgency, ai_summary,
         ai_urgency_reason, is_duplicate, original_report_id
     """
@@ -43,18 +29,10 @@ def analyze_report(
     # ── Resolve API key ────────────────────────────────────────────────────────
     key = (api_key or "").strip()
     if not key:
-        key = os.getenv("GEMINI_API_KEY", "").strip()
+        key = os.getenv("GROQ_API_KEY", "").strip()
 
     if not key:
-        print("[ai_service] No API key available — using rule-based fallback.")
-        return _fallback(category, description, location_name)
-
-    # ── Build model ────────────────────────────────────────────────────────────
-    try:
-        genai.configure(api_key=key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
-    except Exception as e:
-        print(f"[ai_service] Failed to initialise Gemini model: {type(e).__name__}: {e}")
+        print("[ai_service] No GROQ_API_KEY found — using rule-based fallback.")
         return _fallback(category, description, location_name)
 
     # ── Build nearby-reports context for duplicate detection ───────────────────
@@ -70,11 +48,11 @@ def analyze_report(
             )
 
     # ── Prompt ─────────────────────────────────────────────────────────────────
-    prompt = f"""You are an AI assistant for CampusInnovate, a campus operations system
+    prompt = f"""You are an AI assistant for CampusInnovate, a campus issue reporting system
 for the National University of Singapore (NUS).
 
-Analyse the following campus issue report and respond ONLY with a valid JSON object.
-Do NOT include markdown fences, code blocks, or any extra text — just the raw JSON.
+Analyse the campus issue report below and respond ONLY with a valid JSON object.
+No markdown, no code fences, no explanation — just the raw JSON.
 
 --- REPORT ---
 User-selected category : {category}
@@ -83,48 +61,55 @@ Description            : {description or "(none provided)"}
 {nearby_ctx}
 --- END REPORT ---
 
-Return exactly this JSON structure (no extra keys):
+Return exactly this JSON (no extra keys):
 {{
   "ai_category"        : "<one of: Facilities, Safety, Accessibility, Cleanliness, Utilities, Vandalism, Other>",
-  "ai_confidence"      : <float between 0.0 and 1.0>,
+  "ai_confidence"      : <float 0.0-1.0>,
   "ai_urgency"         : "<High | Medium | Low>",
-  "ai_summary"         : "<1-2 sentence summary written for operations staff>",
-  "ai_urgency_reason"  : "<one sentence explaining why this urgency level was chosen>",
+  "ai_summary"         : "<1-2 sentence summary for operations staff>",
+  "ai_urgency_reason"  : "<one sentence explaining the urgency level>",
   "is_duplicate"       : <true | false>,
-  "original_report_id" : "<the report_id string if this is a duplicate, otherwise null>"
+  "original_report_id" : "<report_id if duplicate, else null>"
 }}
 
-Urgency guidelines:
-  High   — safety hazards, water leaks, blocked accessibility ramps, unsecured entrances
-  Medium — facility faults affecting service (HVAC, broken fixtures), recurring nuisances
-  Low    — minor aesthetics, non-urgent suggestions, cosmetic issues
+Urgency rules:
+  High   = safety hazards, water leaks, blocked accessibility ramps, unsecured doors
+  Medium = HVAC failures, broken fixtures, recurring nuisances affecting service
+  Low    = minor aesthetics, cosmetic issues, non-urgent suggestions
 
-Duplicate: mark true only if this report clearly describes the same physical problem
-as one of the nearby reports listed above (same area + same issue type within 24 h)."""
+Duplicate = true only if this report describes the same physical issue as a nearby
+report in the same area within the last 24 hours."""
 
-    # ── Call Gemini ─────────────────────────────────────────────────────────────
-    parts = [prompt]
-    if image_bytes:
-        try:
-            img = Image.open(io.BytesIO(image_bytes))
-            img.thumbnail((1024, 1024))
-            parts.append(img)
-        except Exception as img_err:
-            print(f"[ai_service] Could not attach image: {img_err}")
-
+    # ── Call Groq API ──────────────────────────────────────────────────────────
     try:
-        response = model.generate_content(parts)
-        text = response.text.strip()
+        client = Groq(api_key=key)
+        chat   = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a JSON-only response bot. You never include markdown, "
+                               "code fences, or explanatory text. You respond only with raw JSON.",
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+            temperature=0.1,   # Low temperature = consistent, structured output
+            max_tokens=512,
+        )
 
-        # Strip any accidental markdown fences Gemini sometimes adds
+        text = chat.choices[0].message.content.strip()
+
+        # Safety: strip any accidental fences
         if text.startswith("```"):
-            lines = text.splitlines()
-            lines = [l for l in lines if not l.strip().startswith("```")]
-            text = "\n".join(lines).strip()
+            lines = [l for l in text.splitlines() if not l.strip().startswith("```")]
+            text  = "\n".join(lines).strip()
 
         result = json.loads(text)
 
-        # Ensure all expected keys exist
+        # Ensure all expected keys exist with safe defaults
         result.setdefault("ai_category",        category)
         result.setdefault("ai_confidence",      0.75)
         result.setdefault("ai_urgency",         "Medium")
@@ -140,20 +125,20 @@ as one of the nearby reports listed above (same area + same issue type within 24
         return result
 
     except Exception as e:
-        print(f"[ai_service] Gemini call/parse error: {type(e).__name__}: {e}")
+        print(f"[ai_service] Groq error: {type(e).__name__}: {e}")
         return _fallback(category, description, location_name)
 
 
 # ── Rule-based fallback ────────────────────────────────────────────────────────
 
 def _fallback(category: str, description: str, location_name: str) -> dict:
-    """Simple keyword-based classifier used when Gemini is unavailable."""
-    text = (description or "").lower()
+    """Keyword-based classifier used when the API is unavailable."""
+    text    = (description or "").lower()
     urgency = "Medium"
-    if any(k in text for k in ["water", "leak", "fire", "block", "electric",
-                                "unsafe", "danger", "collapse", "flood", "smoke"]):
+    if any(k in text for k in ["water","leak","fire","block","electric",
+                                "unsafe","danger","collapse","flood","smoke"]):
         urgency = "High"
-    elif any(k in text for k in ["minor", "cosmetic", "paint", "dim", "smell"]):
+    elif any(k in text for k in ["minor","cosmetic","paint","dim","smell"]):
         urgency = "Low"
 
     return {
@@ -161,7 +146,7 @@ def _fallback(category: str, description: str, location_name: str) -> dict:
         "ai_confidence":      0.60,
         "ai_urgency":         urgency,
         "ai_summary":         f"{category} issue reported at {location_name}. {(description or '')[:120]}".strip(),
-        "ai_urgency_reason":  "Classified by rule-based fallback — Gemini API key not configured.",
+        "ai_urgency_reason":  "Classified by rule-based fallback — GROQ_API_KEY not configured.",
         "is_duplicate":       False,
         "original_report_id": None,
     }
