@@ -31,56 +31,139 @@ seed_sample_data()
 # ── CSS ───────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
+  /* ── Aurora Glass — Staff Dashboard ── */
   #MainMenu, footer, header { visibility: hidden; }
   .block-container { padding-top: 1rem; }
 
-  .dash-header {
-    background: linear-gradient(135deg, #1B2A47, #2563EB);
-    border-radius: 14px; padding: 18px 24px; margin-bottom: 20px;
-    color: white;
+  /* Dark gradient background */
+  .stApp {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
   }
-  .dash-header h1 { font-size: 22px; margin: 0; }
-  .dash-header p  { font-size: 13px; opacity: .75; margin: 4px 0 0; }
 
-  /* Stat cards */
-  .kpi-wrap { display: flex; gap: 14px; margin-bottom: 20px; }
-  .kpi-card {
-    flex: 1; border-radius: 12px; padding: 18px 20px;
+  /* Dashboard header — aurora gradient */
+  .dash-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    border-radius: 16px; padding: 20px 26px; margin-bottom: 20px;
     color: white; position: relative; overflow: hidden;
+  }
+  .dash-header::before {
+    content: ''; position: absolute;
+    top: -50px; right: -50px; width: 180px; height: 180px;
+    background: rgba(255,255,255,0.08); border-radius: 50%;
+  }
+  .dash-header h1 { font-size: 22px; margin: 0; position: relative; z-index: 1; }
+  .dash-header p  { font-size: 13px; opacity: .8; margin: 4px 0 0; position: relative; z-index: 1; }
+
+  /* KPI stat cards — glass with gradient tint */
+  .kpi-card {
+    flex: 1; border-radius: 14px; padding: 18px 20px;
+    color: white; position: relative; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   }
   .kpi-card .val  { font-size: 34px; font-weight: 800; }
   .kpi-card .lbl  { font-size: 12px; opacity: .8; margin-bottom: 6px; }
   .kpi-card .icon { position: absolute; right: 16px; top: 16px;
-    font-size: 28px; opacity: .4; }
-  .kpi-purple { background: linear-gradient(135deg,#6D28D9,#8B5CF6); }
-  .kpi-red    { background: linear-gradient(135deg,#DC2626,#F87171); }
-  .kpi-orange { background: linear-gradient(135deg,#D97706,#FBBF24); }
-  .kpi-green  { background: linear-gradient(135deg,#059669,#34D399); }
+    font-size: 28px; opacity: .35; }
+  /* Each card gets a distinct aurora gradient */
+  .kpi-purple { background: linear-gradient(135deg, rgba(109,40,217,0.7), rgba(139,92,246,0.5)); }
+  .kpi-red    { background: linear-gradient(135deg, rgba(220,38,38,0.7),  rgba(248,113,113,0.5)); }
+  .kpi-orange { background: linear-gradient(135deg, rgba(217,119,6,0.7),  rgba(251,191,36,0.5)); }
+  .kpi-green  { background: linear-gradient(135deg, rgba(5,150,105,0.7),  rgba(52,211,153,0.5)); }
 
-  /* Issue cards */
+  /* Issue row cards — frosted glass */
   .issue-row {
-    background: white; border-radius: 12px; padding: 16px 18px;
-    margin-bottom: 10px; border: 1.5px solid #E2E8F0;
-    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 14px; padding: 16px 18px;
+    margin-bottom: 10px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    transition: background 0.2s;
   }
-  .issue-row:hover { box-shadow: 0 4px 12px rgba(0,0,0,.10); }
-  .issue-row.border-high   { border-left: 4px solid #EF4444; }
-  .issue-row.border-medium { border-left: 4px solid #F97316; }
-  .issue-row.border-low    { border-left: 4px solid #F59E0B; }
+  .issue-row:hover { background: rgba(255,255,255,0.13); }
+  .issue-row.border-high   { border-left: 4px solid #FB7185; }
+  .issue-row.border-medium { border-left: 4px solid #FBBF24; }
+  .issue-row.border-low    { border-left: 4px solid #34D399; }
 
-  .badge-high   { background:#FEE2E2; color:#B91C1C; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
-  .badge-medium { background:#FEF3C7; color:#92400E; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
-  .badge-low    { background:#D1FAE5; color:#065F46; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
-  .badge-blue   { background:#DBEAFE; color:#1E40AF; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
-  .badge-gray   { background:#F1F5F9; color:#475569; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
+  /* Badges — glass tinted */
+  .badge-high   { background:rgba(251,113,133,0.25); color:#FFF; border:1px solid rgba(251,113,133,0.4); padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
+  .badge-medium { background:rgba(251,191,36,0.25);  color:#FFF; border:1px solid rgba(251,191,36,0.4);  padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
+  .badge-low    { background:rgba(52,211,153,0.25);  color:#FFF; border:1px solid rgba(52,211,153,0.4);  padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
+  .badge-blue   { background:rgba(102,126,234,0.25); color:#FFF; border:1px solid rgba(102,126,234,0.4); padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
+  .badge-gray   { background:rgba(255,255,255,0.15); color:#FFF; border:1px solid rgba(255,255,255,0.2); padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
 
-  .dup-warn { background:#FFFBEB; border:1px solid #FDE68A; border-radius:8px;
-    padding:8px 12px; font-size:12px; color:#92400E; margin:6px 0; }
+  /* Duplicate warning — glass amber */
+  .dup-warn {
+    background: rgba(251,191,36,0.15); border: 1px solid rgba(251,191,36,0.35);
+    border-radius: 8px; padding: 8px 12px; font-size: 12px;
+    color: #FDE68A; margin: 6px 0;
+  }
 
-  div[data-testid="stButton"] > button { border-radius: 8px; font-weight: 600; }
+  /* Issue text colors on dark bg */
+  .issue-row .issue-title { color: #ffffff; }
+  .issue-row .issue-loc   { color: rgba(255,255,255,0.65); }
+  .issue-row .issue-sum   { color: rgba(255,255,255,0.55); }
+  .issue-row .issue-rea   { color: rgba(255,255,255,0.4); }
+
+  /* Sidebar glass effect */
+  section[data-testid="stSidebar"] {
+    background: rgba(255,255,255,0.06) !important;
+    border-right: 1px solid rgba(255,255,255,0.12) !important;
+    backdrop-filter: blur(12px);
+  }
+  section[data-testid="stSidebar"] * { color: rgba(255,255,255,0.85) !important; }
+
+  /* Buttons */
+  div[data-testid="stButton"] > button {
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px; font-weight: 600; color: white;
+  }
+  div[data-testid="stButton"] > button:hover {
+    background: rgba(255,255,255,0.18);
+  }
   div[data-testid="stButton"] > button[kind="primary"] {
-    background: #1B2A47; border-radius: 8px; font-weight: 700;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px; font-weight: 700; color: white;
   }
+
+  /* Tabs */
+  button[data-baseweb="tab"] {
+    color: rgba(255,255,255,0.6) !important;
+  }
+  button[data-baseweb="tab"][aria-selected="true"] {
+    color: white !important;
+    border-bottom-color: #667eea !important;
+  }
+
+  /* Expander */
+  details {
+    background: rgba(255,255,255,0.06) !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 10px !important;
+  }
+  details summary { color: rgba(255,255,255,0.85) !important; }
+
+  /* Input fields */
+  div[data-testid="stTextInput"] input,
+  div[data-testid="stTextArea"] textarea,
+  div[data-testid="stSelectbox"] > div {
+    background: rgba(255,255,255,0.08) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    border-radius: 10px !important; color: white !important;
+  }
+
+  /* Metrics */
+  div[data-testid="stMetric"] {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px; padding: 14px;
+    backdrop-filter: blur(8px);
+  }
+  div[data-testid="stMetric"] label,
+  div[data-testid="stMetric"] div { color: white !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -98,7 +181,7 @@ DEPARTMENTS = [
 # ── Header ────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="dash-header">
-  <h1>🏛️ UCI Operations Dashboard</h1>
+  <h1>UCI Operations Dashboard</h1>
   <p>CampusInnovate — AI-Assisted Signal Governance</p>
 </div>
 """, unsafe_allow_html=True)
@@ -106,15 +189,15 @@ st.markdown("""
 # Sidebar controls
 with st.sidebar:
     st.markdown("### 🔧 Controls")
-    st.page_link("streamlit_app.py", label="🎓 Student Portal →")
+    st.page_link("streamlit_app.py", label=" Student Portal →")
     st.divider()
     status_filter = st.selectbox("Filter by status", ["All", "Submitted", "In Progress", "Resolved", "Closed"])
-    search_q      = st.text_input("🔍 Search reports", placeholder="ID, location, category…")
+    search_q      = st.text_input(" Search reports", placeholder="ID, location, category…")
     st.divider()
     if st.button("🔄 Refresh data"):
         st.cache_data.clear()
         st.rerun()
-    if st.button("♻️ Reset to sample data", help="Clears all reports and reloads demo data"):
+    if st.button(" Reset to sample data", help="Clears all reports and reloads demo data"):
         delete_all_and_reseed()
         st.success("Reseeded!")
         st.rerun()
@@ -166,7 +249,7 @@ with col4:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ── Main Tabs ─────────────────────────────────────────────────────────────────
-tab_inbox, tab_map, tab_analytics = st.tabs(["📥 Inbox", "🗺️ Campus Map", "📊 Analytics"])
+tab_inbox, tab_map, tab_analytics = st.tabs([" Inbox", " Campus Map", "Analytics"])
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -211,7 +294,7 @@ with tab_inbox:
 
             dept_html = ""
             if r.get("assigned_department"):
-                dept_html = f'<span style="font-size:12px;color:#475569">→ {r["assigned_department"]}</span>'
+                dept_html = f'<span style="font-size:12px;color:rgba(255,255,255,0.55)">→ {r["assigned_department"]}</span>'
 
             title = r.get("description","")
             if title:
@@ -222,17 +305,17 @@ with tab_inbox:
             st.markdown(f"""
             <div class="issue-row {urg_border(urg)}">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-                <span style="font-size:12px;color:#64748B;font-weight:500">{rid}</span>
+                <span style="font-size:12px;color:rgba(255,255,255,0.5);font-weight:500">{rid}</span>
                 <span class="{urg_badge(urg)}">{cat_emoji(cat)} {cat} ({conf}%)</span>
-                <span style="font-size:12px;color:#94A3B8">🕐 {time_ago(r.get('created_at'))}</span>
+                <span style="font-size:12px;color:rgba(255,255,255,0.4)">🕐 {time_ago(r.get('created_at'))}</span>
                 {status_badge}
                 {dept_html}
               </div>
-              <div style="font-size:16px;font-weight:700;margin-bottom:6px">{title}</div>
-              <div style="font-size:13px;color:#475569;margin-bottom:6px">📍 {r.get('location_name','—')}</div>
+              <div style="font-size:16px;font-weight:700;margin-bottom:6px;color:#fff">{title}</div>
+              <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:6px">📍 {r.get('location_name','—')}</div>
               {dup_html}
-              <div style="font-size:13px;color:#64748B">{r.get('ai_summary','')}</div>
-              {f'<div style="font-size:12px;color:#94A3B8;margin-top:6px">ℹ️ {r.get("ai_urgency_reason","")}</div>' if r.get("ai_urgency_reason") else ''}
+              <div style="font-size:13px;color:rgba(255,255,255,0.55)">{r.get('ai_summary','')}</div>
+              {f'<div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:6px">ℹ️ {r.get("ai_urgency_reason","")}</div>' if r.get("ai_urgency_reason") else ''}
             </div>
             """, unsafe_allow_html=True)
 
@@ -332,9 +415,14 @@ with tab_analytics:
         if cats:
             df_cat = pd.DataFrame(cats)
             fig = px.pie(df_cat, names="category", values="count", hole=0.55,
-                         color_discrete_sequence=px.colors.qualitative.Bold)
-            fig.update_layout(margin=dict(t=20,b=20,l=20,r=20), height=280,
-                              legend=dict(orientation="h", yanchor="bottom", y=-0.3))
+                         color_discrete_sequence=["#667eea","#f093fb","#34D399","#FBBF24","#FB7185","#60A5FA","#a78bfa"])
+            fig.update_layout(
+                margin=dict(t=20,b=20,l=20,r=20), height=280,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(color="rgba(255,255,255,0.8)"),
+                legend=dict(orientation="h", yanchor="bottom", y=-0.35,
+                            font=dict(color="rgba(255,255,255,0.7)")),
+            )
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No data yet.")
@@ -346,12 +434,18 @@ with tab_analytics:
         if urgs:
             df_urg = pd.DataFrame(urgs)
             df_urg = df_urg.rename(columns={"ai_urgency": "Urgency", "count": "Count"})
-            color_seq = {"High": "#EF4444", "Medium": "#F97316", "Low": "#F59E0B"}
+            color_seq = {"High": "#FB7185", "Medium": "#FBBF24", "Low": "#34D399"}
             fig2 = px.bar(df_urg, x="Urgency", y="Count",
                           color="Urgency", color_discrete_map=color_seq,
                           text="Count")
-            fig2.update_layout(showlegend=False, margin=dict(t=20,b=20,l=20,r=20), height=280)
-            fig2.update_traces(textposition="outside")
+            fig2.update_layout(
+                showlegend=False, margin=dict(t=20,b=20,l=20,r=20), height=280,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(color="rgba(255,255,255,0.8)"),
+                xaxis=dict(gridcolor="rgba(255,255,255,0.08)"),
+                yaxis=dict(gridcolor="rgba(255,255,255,0.08)"),
+            )
+            fig2.update_traces(textposition="outside", textfont_color="white")
             st.plotly_chart(fig2, use_container_width=True)
         else:
             st.info("No data yet.")
@@ -363,10 +457,16 @@ with tab_analytics:
         df_daily = pd.DataFrame(daily)
         df_daily["date"] = pd.to_datetime(df_daily["date"])
         fig3 = px.area(df_daily, x="date", y="count",
-                       color_discrete_sequence=["#2563EB"])
-        fig3.update_layout(margin=dict(t=10,b=20,l=20,r=20), height=220,
-                           xaxis_title="", yaxis_title="Reports")
-        fig3.update_traces(line_width=2.5)
+                       color_discrete_sequence=["#667eea"])
+        fig3.update_layout(
+            margin=dict(t=10,b=20,l=20,r=20), height=220,
+            xaxis_title="", yaxis_title="Reports",
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="rgba(255,255,255,0.7)"),
+            xaxis=dict(gridcolor="rgba(255,255,255,0.08)"),
+            yaxis=dict(gridcolor="rgba(255,255,255,0.08)"),
+        )
+        fig3.update_traces(line_width=2.5, fillcolor="rgba(102,126,234,0.2)")
         st.plotly_chart(fig3, use_container_width=True)
     else:
         st.info("Trend data will appear after reports are submitted over multiple days.")
@@ -378,4 +478,4 @@ with tab_analytics:
             ["report_id","ai_category","ai_urgency","status","location_name","created_at"]
         ]
         csv = df_export.to_csv(index=False)
-        st.download_button("⬇️ Export CSV", csv, "campusinnovate_export.csv", "text/csv")
+        st.download_button("Export CSV", csv, "campusinnovate_export.csv", "text/csv")
