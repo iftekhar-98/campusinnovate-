@@ -22,12 +22,12 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ── Gemini API key — read here in main context where st.secrets is reliable ──
+# ── Groq API key — read here in main context where st.secrets is reliable ─────
 _gemini_key = ""
 try:
-    _gemini_key = st.secrets["GEMINI_API_KEY"]
+    _gemini_key = st.secrets["GROQ_API_KEY"]
 except Exception:
-    pass  # Key missing or secrets not configured — AI will use rule-based fallback
+    pass  # Key missing — AI will use rule-based fallback
 
 # ── Init DB once ──────────────────────────────────────────────────────────────
 init_db()
