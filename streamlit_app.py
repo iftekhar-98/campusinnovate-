@@ -17,7 +17,6 @@ from ai_service import analyze_report
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="CampusInnovate — Report an Issue",
-    page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -36,75 +35,134 @@ seed_sample_data()
 # ── Custom CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-  /* Hide default Streamlit chrome */
+  /* ── Aurora Glass — Student Page ── */
   #MainMenu, footer, header { visibility: hidden; }
-  .block-container { padding-top: 1rem; padding-bottom: 1rem; }
+  [data-testid="stSidebarNav"] { display: none !important; }
 
-  /* App header */
+  /* Dark gradient background across the entire app */
+  .stApp {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
+  }
+  .block-container { padding-top: 1.2rem; padding-bottom: 1rem; }
+
+  /* App header — aurora gradient */
   .app-header {
-    background: linear-gradient(135deg, #1B2A47, #2563EB);
-    border-radius: 14px; padding: 18px 24px; margin-bottom: 20px;
-    display: flex; align-items: center; justify-content: space-between;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    border-radius: 16px; padding: 20px 26px; margin-bottom: 20px;
+    position: relative; overflow: hidden;
   }
-  .app-header h1 { color: white; font-size: 22px; margin: 0; }
-  .app-header p  { color: rgba(255,255,255,.75); font-size: 13px; margin: 4px 0 0; }
-
-  /* Stat metric cards */
-  .metric-box {
-    background: white; border-radius: 12px; padding: 18px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.08); text-align: center;
-    border-left: 4px solid #2563EB;
+  .app-header::before {
+    content: ''; position: absolute;
+    top: -50px; right: -50px; width: 180px; height: 180px;
+    background: rgba(255,255,255,0.08); border-radius: 50%;
   }
-  .metric-box .val { font-size: 28px; font-weight: 800; color: #1B2A47; }
-  .metric-box .lbl { font-size: 12px; color: #64748B; margin-top: 4px; }
+  .app-header::after {
+    content: ''; position: absolute;
+    bottom: -30px; left: -30px; width: 120px; height: 120px;
+    background: rgba(255,255,255,0.05); border-radius: 50%;
+  }
+  .app-header h1 { color: white; font-size: 22px; margin: 0; position: relative; z-index: 1; }
+  .app-header p  { color: rgba(255,255,255,0.8); font-size: 13px; margin: 4px 0 0; position: relative; z-index: 1; }
 
-  /* Section card */
+  /* Glass section cards */
   .section-card {
-    background: white; border-radius: 14px; padding: 22px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.07); margin-bottom: 16px;
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 16px; padding: 22px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    margin-bottom: 16px;
   }
-  .section-title { font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 4px; }
-  .section-sub   { font-size: 13px; color: #64748B; margin-bottom: 16px; }
+  .section-title { font-size: 16px; font-weight: 700; color: #ffffff; margin-bottom: 4px; }
+  .section-sub   { font-size: 13px; color: rgba(255,255,255,0.65); margin-bottom: 16px; }
 
-  /* Report cards in tracking */
+  /* Tracking report cards */
   .report-card {
-    background: #F8FAFC; border-radius: 10px; padding: 16px;
-    border-left: 4px solid #2563EB; margin-bottom: 10px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-left: 4px solid #667eea;
+    border-radius: 12px; padding: 16px; margin-bottom: 10px;
+    backdrop-filter: blur(8px);
   }
-  .report-card.high   { border-left-color: #EF4444; }
-  .report-card.medium { border-left-color: #F97316; }
-  .report-card.low    { border-left-color: #F59E0B; }
+  .report-card.high   { border-left-color: #FB7185; }
+  .report-card.medium { border-left-color: #FBBF24; }
+  .report-card.low    { border-left-color: #34D399; }
 
-  /* Urgency badges */
-  .badge-high   { background:#FEE2E2; color:#B91C1C; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
-  .badge-medium { background:#FEF3C7; color:#92400E; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
-  .badge-low    { background:#D1FAE5; color:#065F46; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
+  /* Urgency badges — glass tinted */
+  .badge-high   { background:rgba(251,113,133,0.25); color:#FFF; border:1px solid rgba(251,113,133,0.4); padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
+  .badge-medium { background:rgba(251,191,36,0.25);  color:#FFF; border:1px solid rgba(251,191,36,0.4);  padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
+  .badge-low    { background:rgba(52,211,153,0.25);  color:#FFF; border:1px solid rgba(52,211,153,0.4);  padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
 
   /* Success box */
   .success-box {
-    background: linear-gradient(135deg, #065F46, #10B981);
-    border-radius: 14px; padding: 28px; text-align: center; color: white;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 16px; padding: 32px; text-align: center; color: white;
+    position: relative; overflow: hidden;
+  }
+  .success-box::before {
+    content: ''; position: absolute;
+    top: -40px; right: -40px; width: 140px; height: 140px;
+    background: rgba(255,255,255,0.08); border-radius: 50%;
   }
   .success-box .report-id {
-    background: rgba(255,255,255,.2); border-radius: 10px;
-    padding: 14px; font-size: 26px; font-weight: 800;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 12px; padding: 14px;
+    font-size: 26px; font-weight: 800;
     letter-spacing: 2px; margin: 16px 0;
+    position: relative; z-index: 1;
   }
   .duplicate-warn {
-    background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px;
-    padding: 12px 16px; font-size: 13px; color: #92400E;
+    background: rgba(251,191,36,0.15);
+    border: 1px solid rgba(251,191,36,0.35);
+    border-radius: 10px; padding: 12px 16px;
+    font-size: 13px; color: #FDE68A;
   }
 
-  /* Hide the Streamlit sidebar page navigation on the student page
-     (students should not see or navigate to the Staff Dashboard) */
-  [data-testid="stSidebarNav"] { display: none !important; }
+  /* Tips box */
+  .tips-box {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 16px; padding: 18px 22px; margin-top: 0;
+    backdrop-filter: blur(8px);
+  }
+  .tips-box .section-title { color: #fff; }
+  .tips-box ul { color: rgba(255,255,255,0.7); font-size: 13px; margin: 0; padding-left: 18px; }
+  .tips-box ul li { margin-bottom: 6px; }
 
+  /* Streamlit widget overrides for dark theme */
   div[data-testid="stButton"] > button[kind="primary"] {
-    background: #2563EB; border-radius: 10px;
-    font-weight: 700; font-size: 15px; padding: 12px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px; font-weight: 700; font-size: 15px; padding: 12px;
+    color: white;
   }
   div[data-testid="stButton"] > button {
-    border-radius: 10px; font-weight: 600;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px; font-weight: 600; color: white;
+  }
+  div[data-testid="stButton"] > button:hover {
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.35);
+  }
+  /* Input fields */
+  div[data-testid="stTextInput"] input,
+  div[data-testid="stTextArea"] textarea,
+  div[data-testid="stSelectbox"] > div {
+    background: rgba(255,255,255,0.08) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    border-radius: 10px !important; color: white !important;
+  }
+  /* Divider */
+  hr { border-color: rgba(255,255,255,0.12) !important; }
+  /* Streamlit info/success/error boxes */
+  div[data-testid="stAlert"] {
+    background: rgba(255,255,255,0.08) !important;
+    border: 1px solid rgba(255,255,255,0.18) !important;
+    border-radius: 10px !important; color: white !important;
   }
 </style>
 """, unsafe_allow_html=True)
@@ -132,7 +190,7 @@ for key, val in {
 st.markdown("""
 <div class="app-header">
   <div>
-    <h1>🏛️ CampusInnovate</h1>
+    <h1>CampusInnovate</h1>
     <p>AI-Assisted Campus Issue Reporting — National University of Singapore</p>
   </div>
 </div>
@@ -141,7 +199,7 @@ st.markdown("""
 # Navigation — Track button only (staff dashboard is staff-only, accessed via its own URL)
 col_nav1, col_nav2 = st.columns([1, 5])
 with col_nav1:
-    if st.button("📋 Track my report", use_container_width=True):
+    if st.button("Track my report", use_container_width=True):
         st.session_state.show_tracking = not st.session_state.show_tracking
 
 st.divider()
@@ -167,7 +225,7 @@ if st.session_state.last_submitted:
           Original: <code>{r.get('original_report_id','—')}</code>
         </div>
         """, unsafe_allow_html=True)
-    if st.button("🗺️ Submit another report", use_container_width=True):
+    if st.button("Submit another report", use_container_width=True):
         st.session_state.last_submitted = None
         st.rerun()
     st.stop()
@@ -219,7 +277,7 @@ with left_col:
     st.markdown('<div class="section-sub">Click anywhere on the NUS campus map to set your issue location</div>', unsafe_allow_html=True)
 
     # OneMap search
-    search_q = st.text_input("🔍 Search campus location", placeholder="e.g. COM2, Central Library, UTown…", label_visibility="collapsed")
+    search_q = st.text_input("Search campus location", placeholder="e.g. COM2, Central Library, UTown…", label_visibility="collapsed")
 
     search_lat, search_lng, search_name = None, None, None
     if search_q and len(search_q) >= 2:
@@ -305,20 +363,20 @@ with left_col:
         st.success(f"📍 **Selected:** {st.session_state.selected_location}  \n"
                    f"`{st.session_state.selected_lat:.5f}°N, {st.session_state.selected_lng:.5f}°E`")
     else:
-        st.info("👆 Click on the map to select your issue location, or tap 📍 to use your current location")
+        st.info("Click on the map to select your issue location, or tap 📍 to use your current location")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ── RIGHT: Report Form ─────────────────────────────────────────────────────────
 with right_col:
     st.markdown('<div class="section-card">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">📝 Report an Issue</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title"> Report an Issue</div>', unsafe_allow_html=True)
     st.markdown('<div class="section-sub">Fill in the details below and submit</div>', unsafe_allow_html=True)
 
     with st.form("report_form", clear_on_submit=True):
 
         # Photo
-        photo_file = st.file_uploader("📷 Add a photo (optional)",
+        photo_file = st.file_uploader("Add a photo (optional)",
                                        type=["jpg","jpeg","png","webp"],
                                        help="Photos help AI classify the issue more accurately")
         if photo_file:
@@ -329,13 +387,13 @@ with right_col:
         st.text_input("📍 Location (select on map)", value=loc_display, disabled=True)
 
         # Category
-        category = st.selectbox("🏷️ Category", [
+        category = st.selectbox("Category", [
             "Accessibility", "Facilities", "Safety",
             "Cleanliness", "Utilities", "Other",
         ])
 
         # Description
-        description = st.text_area("📄 Description (optional)",
+        description = st.text_area("Description (optional)",
                                     placeholder="Briefly describe the issue…",
                                     max_chars=200,
                                     help="Max 200 characters")
@@ -344,7 +402,7 @@ with right_col:
         st.caption(f"{char_left} characters remaining")
 
         submitted = st.form_submit_button(
-            "🤖 Submit & Analyse with AI",
+            "Submit & Analyse with AI",
             type="primary", use_container_width=True,
         )
 
@@ -363,7 +421,7 @@ with right_col:
                 with open(photo_path, "wb") as f:
                     f.write(image_bytes)
 
-            with st.spinner("🤖 AI is analysing your report… (classifying, checking for duplicates, scoring urgency)"):
+            with st.spinner("AI is analysing your report… (classifying, checking for duplicates, scoring urgency)"):
                 nearby = get_nearby_reports(
                     st.session_state.selected_lat,
                     st.session_state.selected_lng,
@@ -395,9 +453,9 @@ with right_col:
 
     # Tips box
     st.markdown("""
-    <div class="section-card" style="margin-top:0">
+    <div class="tips-box">
       <div class="section-title">💡 Tips</div>
-      <ul style="font-size:13px;color:#475569;margin:0;padding-left:18px">
+      <ul>
         <li>Click exactly on the building or area with the issue</li>
         <li>Use the search bar to find a specific building quickly</li>
         <li>Adding a photo improves AI accuracy significantly</li>
