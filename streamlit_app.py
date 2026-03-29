@@ -17,9 +17,17 @@ from ai_service import analyze_report
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="CampusInnovate — Report an Issue",
+    page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+
+# ── Gemini API key — read here in main context where st.secrets is reliable ──
+_gemini_key = ""
+try:
+    _gemini_key = st.secrets["GEMINI_API_KEY"]
+except Exception:
+    pass  # Key missing or secrets not configured — AI will use rule-based fallback
 
 # ── Init DB once ──────────────────────────────────────────────────────────────
 init_db()
@@ -124,7 +132,7 @@ for key, val in {
 st.markdown("""
 <div class="app-header">
   <div>
-    <h1>CampusInnovate</h1>
+    <h1>🏛️ CampusInnovate</h1>
     <p>AI-Assisted Campus Issue Reporting — National University of Singapore</p>
   </div>
 </div>
@@ -133,7 +141,7 @@ st.markdown("""
 # Navigation — Track button only (staff dashboard is staff-only, accessed via its own URL)
 col_nav1, col_nav2 = st.columns([1, 5])
 with col_nav1:
-    if st.button("Track my report", use_container_width=True):
+    if st.button("📋 Track my report", use_container_width=True):
         st.session_state.show_tracking = not st.session_state.show_tracking
 
 st.divider()
@@ -159,7 +167,7 @@ if st.session_state.last_submitted:
           Original: <code>{r.get('original_report_id','—')}</code>
         </div>
         """, unsafe_allow_html=True)
-    if st.button("Submit another report", use_container_width=True):
+    if st.button("🗺️ Submit another report", use_container_width=True):
         st.session_state.last_submitted = None
         st.rerun()
     st.stop()
@@ -207,11 +215,11 @@ left_col, right_col = st.columns([3, 2], gap="large")
 # ── LEFT: Map ─────────────────────────────────────────────────────────────────
 with left_col:
     st.markdown('<div class="section-card">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">Select Location on Map</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">🗺️ Select Location on Map</div>', unsafe_allow_html=True)
     st.markdown('<div class="section-sub">Click anywhere on the NUS campus map to set your issue location</div>', unsafe_allow_html=True)
 
     # OneMap search
-    search_q = st.text_input("Search campus location", placeholder="e.g. COM2, Central Library, UTown…", label_visibility="collapsed")
+    search_q = st.text_input("🔍 Search campus location", placeholder="e.g. COM2, Central Library, UTown…", label_visibility="collapsed")
 
     search_lat, search_lng, search_name = None, None, None
     if search_q and len(search_q) >= 2:
@@ -282,19 +290,6 @@ with left_col:
             icon=folium.Icon(color="blue", icon="map-marker", prefix="fa"),
         ).add_to(m)
 
-    # Show existing reports as coloured circles
-    from database import get_all_reports
-    existing = get_all_reports()
-    color_map = {"High": "red", "Medium": "orange", "Low": "beige"}
-    for rep in existing:
-        if rep.get("location_lat") and rep.get("location_lng"):
-            c = color_map.get(rep.get("ai_urgency","Low"), "gray")
-            folium.CircleMarker(
-                location=[rep["location_lat"], rep["location_lng"]],
-                radius=8, color=c, fill=True, fill_color=c, fill_opacity=0.7,
-                tooltip=f"{rep['report_id']}: {rep.get('ai_category',rep.get('category',''))} ({rep.get('ai_urgency','')}) — {rep.get('status','')}",
-            ).add_to(m)
-
     # Render map and capture clicks
     map_data = st_folium(m, width="100%", height=450, returned_objects=["last_clicked"])
 
@@ -310,14 +305,14 @@ with left_col:
         st.success(f"📍 **Selected:** {st.session_state.selected_location}  \n"
                    f"`{st.session_state.selected_lat:.5f}°N, {st.session_state.selected_lng:.5f}°E`")
     else:
-        st.info("Click on the map to select your issue location, or tap 📍 to use your current location")
+        st.info("👆 Click on the map to select your issue location, or tap 📍 to use your current location")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ── RIGHT: Report Form ─────────────────────────────────────────────────────────
 with right_col:
     st.markdown('<div class="section-card">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title"> Report an Issue</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📝 Report an Issue</div>', unsafe_allow_html=True)
     st.markdown('<div class="section-sub">Fill in the details below and submit</div>', unsafe_allow_html=True)
 
     with st.form("report_form", clear_on_submit=True):
@@ -334,13 +329,13 @@ with right_col:
         st.text_input("📍 Location (select on map)", value=loc_display, disabled=True)
 
         # Category
-        category = st.selectbox("Category", [
+        category = st.selectbox("🏷️ Category", [
             "Accessibility", "Facilities", "Safety",
             "Cleanliness", "Utilities", "Other",
         ])
 
         # Description
-        description = st.text_area("Description (optional)",
+        description = st.text_area("📄 Description (optional)",
                                     placeholder="Briefly describe the issue…",
                                     max_chars=200,
                                     help="Max 200 characters")
@@ -349,7 +344,7 @@ with right_col:
         st.caption(f"{char_left} characters remaining")
 
         submitted = st.form_submit_button(
-            " Submit & Analyse with AI",
+            "🤖 Submit & Analyse with AI",
             type="primary", use_container_width=True,
         )
 
@@ -368,7 +363,7 @@ with right_col:
                 with open(photo_path, "wb") as f:
                     f.write(image_bytes)
 
-            with st.spinner(" AI is analysing your report… (classifying, checking for duplicates, scoring urgency)"):
+            with st.spinner("🤖 AI is analysing your report… (classifying, checking for duplicates, scoring urgency)"):
                 nearby = get_nearby_reports(
                     st.session_state.selected_lat,
                     st.session_state.selected_lng,
@@ -377,6 +372,7 @@ with right_col:
                     category, description,
                     st.session_state.selected_location,
                     image_bytes, nearby,
+                    api_key=_gemini_key,
                 )
 
             report = create_report({
