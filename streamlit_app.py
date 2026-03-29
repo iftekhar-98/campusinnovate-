@@ -33,79 +33,94 @@ except Exception:
 init_db()
 seed_sample_data()
 
-# ── Custom CSS ────────────────────────────────────────────────────────────────
+# ── Custom CSS (MODIFIED FOR MODERN UI) ───────────────────────────────────────
 st.markdown("""
 <style>
-  /* Hide default Streamlit chrome */
+  /* 1. Global App Background & Spacing */
+  .stApp { background-color: #F8FAFC; }
   #MainMenu, footer, header { visibility: hidden; }
-  .block-container { padding-top: 1rem; padding-bottom: 1rem; }
+  .block-container { padding-top: 2rem; padding-bottom: 2rem; max-width: 1200px; }
 
-  /* App header */
+  /* 2. Elegant Header */
   .app-header {
-    background: linear-gradient(135deg, #1B2A47, #2563EB);
-    border-radius: 14px; padding: 18px 24px; margin-bottom: 20px;
-    display: flex; align-items: center; justify-content: space-between;
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 24px 32px;
+    margin-bottom: 28px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #E2E8F0;
   }
-  .app-header h1 { color: white; font-size: 22px; margin: 0; }
-  .app-header p  { color: rgba(255,255,255,.75); font-size: 13px; margin: 4px 0 0; }
+  .app-header h1 { color: #0F172A; font-size: 28px; font-weight: 800; margin: 0; letter-spacing: -0.5px; }
+  .app-header p  { color: #64748B; font-size: 15px; margin: 6px 0 0; font-weight: 400; }
 
-  /* Stat metric cards */
-  .metric-box {
-    background: white; border-radius: 12px; padding: 18px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.08); text-align: center;
-    border-left: 4px solid #2563EB;
-  }
-  .metric-box .val { font-size: 28px; font-weight: 800; color: #1B2A47; }
-  .metric-box .lbl { font-size: 12px; color: #64748B; margin-top: 4px; }
-
-  /* Section card */
+  /* 3. Section Cards (For Map and Form) */
   .section-card {
-    background: white; border-radius: 14px; padding: 22px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.07); margin-bottom: 16px;
+    background: #FFFFFF; 
+    border-radius: 16px; 
+    padding: 28px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.04); 
+    border: 1px solid #E2E8F0;
+    margin-bottom: 20px;
   }
-  .section-title { font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 4px; }
-  .section-sub   { font-size: 13px; color: #64748B; margin-bottom: 16px; }
+  .section-title { font-size: 18px; font-weight: 700; color: #0F172A; margin-bottom: 6px; }
+  .section-sub   { font-size: 14px; color: #64748B; margin-bottom: 24px; }
 
-  /* Report cards in tracking */
-  .report-card {
-    background: #F8FAFC; border-radius: 10px; padding: 16px;
-    border-left: 4px solid #2563EB; margin-bottom: 10px;
+  /* 4. Streamlit Input Overrides (Making form fields look modern) */
+  div[data-baseweb="input"] > div,
+  div[data-baseweb="textarea"] > div,
+  div[data-baseweb="select"] > div {
+    background-color: #F8FAFC !important;
+    border-radius: 10px !important;
+    border: 1px solid #CBD5E1 !important;
+    transition: all 0.2s ease;
   }
-  .report-card.high   { border-left-color: #EF4444; }
-  .report-card.medium { border-left-color: #F97316; }
-  .report-card.low    { border-left-color: #F59E0B; }
+  div[data-baseweb="input"] > div:focus-within,
+  div[data-baseweb="textarea"] > div:focus-within {
+    border-color: #3B82F6 !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+  }
 
-  /* Urgency badges */
-  .badge-high   { background:#FEE2E2; color:#B91C1C; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
-  .badge-medium { background:#FEF3C7; color:#92400E; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
-  .badge-low    { background:#D1FAE5; color:#065F46; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:600; }
-
-  /* Success box */
+  /* 5. Buttons Styling */
+  div[data-testid="stButton"] > button[kind="primary"],
+  div[data-testid="stFormSubmitButton"] > button {
+    background: linear-gradient(135deg, #2563EB, #1D4ED8);
+    color: white;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 16px;
+    padding: 14px 24px;
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+    transition: all 0.2s;
+  }
+  div[data-testid="stButton"] > button[kind="primary"]:hover,
+  div[data-testid="stFormSubmitButton"] > button:hover {
+    box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.3);
+    transform: translateY(-1px);
+  }
+  
+  /* 6. Success & Warning Boxes */
   .success-box {
-    background: linear-gradient(135deg, #065F46, #10B981);
-    border-radius: 14px; padding: 28px; text-align: center; color: white;
+    background: linear-gradient(135deg, #059669, #10B981);
+    border-radius: 16px; padding: 32px; text-align: center; color: white;
+    box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
   }
   .success-box .report-id {
-    background: rgba(255,255,255,.2); border-radius: 10px;
-    padding: 14px; font-size: 26px; font-weight: 800;
-    letter-spacing: 2px; margin: 16px 0;
+    background: rgba(255,255,255,0.2); border-radius: 12px;
+    padding: 16px; font-size: 28px; font-weight: 800;
+    letter-spacing: 2px; margin: 20px 0; border: 1px dashed rgba(255,255,255,0.5);
   }
   .duplicate-warn {
-    background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px;
-    padding: 12px 16px; font-size: 13px; color: #92400E;
+    background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 12px;
+    padding: 16px; font-size: 14px; color: #92400E; margin-top: 16px;
+    display: flex; align-items: center; gap: 8px;
   }
 
-  /* Hide the Streamlit sidebar page navigation on the student page
-     (students should not see or navigate to the Staff Dashboard) */
+  /* Hide the Streamlit sidebar page navigation on the student page */
   [data-testid="stSidebarNav"] { display: none !important; }
-
-  div[data-testid="stButton"] > button[kind="primary"] {
-    background: #2563EB; border-radius: 10px;
-    font-weight: 700; font-size: 15px; padding: 12px;
-  }
-  div[data-testid="stButton"] > button {
-    border-radius: 10px; font-weight: 600;
-  }
 </style>
 """, unsafe_allow_html=True)
 
@@ -138,8 +153,8 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Navigation — Track button only (staff dashboard is staff-only, accessed via its own URL)
-col_nav1, col_nav2 = st.columns([1, 5])
+# Navigation — Track button only
+col_nav1, col_nav2 = st.columns([1.5, 5])
 with col_nav1:
     if st.button("📋 Track my report", use_container_width=True):
         st.session_state.show_tracking = not st.session_state.show_tracking
@@ -152,22 +167,24 @@ if st.session_state.last_submitted:
     urg = r.get("ai_urgency", "Medium").lower()
     st.markdown(f"""
     <div class="success-box">
-      <div style="font-size:40px">✅</div>
+      <div style="font-size:48px">✅</div>
       <h2 style="margin:10px 0 4px">Report Submitted!</h2>
-      <p style="opacity:.85">Received and awaiting staff review.</p>
+      <p style="opacity:.9">Received and awaiting staff review.</p>
       <div class="report-id">{r['report_id']}</div>
-      <p style="opacity:.75;font-size:13px">Save this ID to track your report status</p>
+      <p style="opacity:.8;font-size:14px">Save this ID to track your report status</p>
     </div>
     """, unsafe_allow_html=True)
     if r.get("is_duplicate"):
         st.markdown(f"""
-        <div class="duplicate-warn" style="margin-top:12px">
-          ⚠️ <strong>Possible duplicate detected.</strong>
+        <div class="duplicate-warn">
+          <strong>⚠️ Possible duplicate detected:</strong>
           Your report may be related to an existing issue in this area.
-          Original: <code>{r.get('original_report_id','—')}</code>
+          (Original: <code>{r.get('original_report_id','—')}</code>)
         </div>
         """, unsafe_allow_html=True)
-    if st.button("🗺️ Submit another report", use_container_width=True):
+    
+    st.write("") # Spacer
+    if st.button("🗺️ Submit another report", type="primary", use_container_width=True):
         st.session_state.last_submitted = None
         st.rerun()
     st.stop()
@@ -176,9 +193,9 @@ if st.session_state.last_submitted:
 if st.session_state.show_tracking:
     with st.container():
         st.markdown('<div class="section-card">', unsafe_allow_html=True)
-        st.markdown("### 📋 Track Your Report")
+        st.markdown('<div class="section-title">📋 Track Your Report</div>', unsafe_allow_html=True)
         track_id = st.text_input("Enter your Report ID", placeholder="e.g. CI-2026-A3F7",
-                                  key="track_input").strip().upper()
+                                  key="track_input", label_visibility="collapsed").strip().upper()
         if st.button("Check Status", key="track_btn"):
             if track_id:
                 report = get_report_by_id(track_id)
@@ -192,11 +209,13 @@ if st.session_state.show_tracking:
                         for i, s in enumerate(statuses)
                     ])
                     st.markdown(f"""
-                    <div class="report-card {urg}">
-                      <strong>{report['report_id']}</strong>
-                      <span class="{badge_cls}" style="margin-left:10px">{report.get('ai_urgency','—')}</span>
-                      <p style="margin:8px 0 4px;font-size:14px">📍 {report.get('location_name','—')}</p>
-                      <p style="font-size:13px;color:#475569">{report.get('ai_summary') or report.get('description','')}</p>
+                    <div style="background: #F8FAFC; border-radius: 12px; padding: 20px; border: 1px solid #E2E8F0; margin: 16px 0;">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <strong style="font-size: 18px; color: #0F172A;">{report['report_id']}</strong>
+                        <span style="background:#F1F5F9; color:#475569; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600;">{report.get('ai_urgency','—')} Urgency</span>
+                      </div>
+                      <p style="margin:0 0 8px; font-size:14px; color: #334155;">📍 {report.get('location_name','—')}</p>
+                      <p style="font-size:14px; color:#64748B; margin: 0;">{report.get('ai_summary') or report.get('description','')}</p>
                     </div>
                     """, unsafe_allow_html=True)
                     st.markdown(timeline)
@@ -210,13 +229,13 @@ if st.session_state.show_tracking:
     st.divider()
 
 # ── Main layout: Map (left) + Form (right) ────────────────────────────────────
-left_col, right_col = st.columns([3, 2], gap="large")
+left_col, right_col = st.columns([1.2, 1], gap="large")
 
 # ── LEFT: Map ─────────────────────────────────────────────────────────────────
 with left_col:
     st.markdown('<div class="section-card">', unsafe_allow_html=True)
     st.markdown('<div class="section-title">🗺️ Select Location on Map</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-sub">Click anywhere on the NUS campus map to set your issue location</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-sub">Click anywhere on the NUS campus map to set your issue location.</div>', unsafe_allow_html=True)
 
     # OneMap search
     search_q = st.text_input("🔍 Search campus location", placeholder="e.g. COM2, Central Library, UTown…", label_visibility="collapsed")
@@ -268,12 +287,9 @@ with left_col:
     ).add_to(m)
 
     # ── Geolocation button (Fix 2) ─────────────────────────────────────────
-    # Adds a "locate me" button to the map that uses the browser's GPS.
-    # When clicked, it centres the map on the user and drops a blue marker.
-    # The user can then still click anywhere to adjust the pin manually.
     from folium.plugins import LocateControl
     LocateControl(
-        auto_start=False,          # Don't auto-trigger — wait for user to tap the button
+        auto_start=False,
         position="topright",
         strings={"title": "Use my current location"},
         flyTo=True,
@@ -291,7 +307,7 @@ with left_col:
         ).add_to(m)
 
     # Render map and capture clicks
-    map_data = st_folium(m, width="100%", height=450, returned_objects=["last_clicked"])
+    map_data = st_folium(m, width="100%", height=420, returned_objects=["last_clicked"])
 
     # Handle click
     if map_data and map_data.get("last_clicked"):
@@ -313,7 +329,7 @@ with left_col:
 with right_col:
     st.markdown('<div class="section-card">', unsafe_allow_html=True)
     st.markdown('<div class="section-title">📝 Report an Issue</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-sub">Fill in the details below and submit</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-sub">Fill in the details below to notify the campus team.</div>', unsafe_allow_html=True)
 
     with st.form("report_form", clear_on_submit=True):
 
@@ -326,7 +342,7 @@ with right_col:
 
         # Location display (read-only)
         loc_display = st.session_state.selected_location or "No location selected yet"
-        st.text_input("📍 Location (select on map)", value=loc_display, disabled=True)
+        st.text_input("📍 Selected Location", value=loc_display, disabled=True)
 
         # Category
         category = st.selectbox("🏷️ Category", [
@@ -336,12 +352,14 @@ with right_col:
 
         # Description
         description = st.text_area("📄 Description (optional)",
-                                    placeholder="Briefly describe the issue…",
+                                    placeholder="Briefly describe the issue (e.g., Water leaking from the ceiling)...",
                                     max_chars=200,
                                     help="Max 200 characters")
 
         char_left = 200 - len(description)
-        st.caption(f"{char_left} characters remaining")
+        st.caption(f"✏️ {char_left} characters remaining")
+
+        st.write("") # Spacer before button
 
         submitted = st.form_submit_button(
             "🤖 Submit & Analyse with AI",
@@ -392,16 +410,14 @@ with right_col:
             st.rerun()
 
     st.markdown('</div>', unsafe_allow_html=True)
-
-    # Tips box
+    
+    # Clean Tips box
     st.markdown("""
-    <div class="section-card" style="margin-top:0">
-      <div class="section-title">💡 Tips</div>
-      <ul style="font-size:13px;color:#475569;margin:0;padding-left:18px">
-        <li>Click exactly on the building or area with the issue</li>
-        <li>Use the search bar to find a specific building quickly</li>
-        <li>Adding a photo improves AI accuracy significantly</li>
-        <li>After submitting, save your Report ID to track progress</li>
+    <div style="background: transparent; padding: 0 10px;">
+      <strong style="color: #475569; font-size: 14px;">💡 Quick Tips:</strong>
+      <ul style="font-size:13px; color:#64748B; margin-top: 6px; padding-left:20px; line-height: 1.6;">
+        <li>Adding a photo helps the AI automatically categorize the fault.</li>
+        <li>Ensure your map pin is as accurate as possible to speed up maintenance routing.</li>
       </ul>
     </div>
     """, unsafe_allow_html=True)
