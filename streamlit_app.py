@@ -17,7 +17,6 @@ from ai_service import analyze_report
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="CampusInnovate — Report an Issue",
-    page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -203,7 +202,7 @@ st.markdown(f"""
 # Navigation — Track button only (staff dashboard is staff-only, accessed via its own URL)
 col_nav1, col_nav2 = st.columns([1, 5])
 with col_nav1:
-    if st.button("📋 Track my report", use_container_width=True):
+    if st.button("Track my report", use_container_width=True):
         st.session_state.show_tracking = not st.session_state.show_tracking
 
 st.divider()
@@ -229,7 +228,7 @@ if st.session_state.last_submitted:
           Original: <code>{r.get('original_report_id','—')}</code>
         </div>
         """, unsafe_allow_html=True)
-    if st.button("🗺️ Submit another report", use_container_width=True):
+    if st.button("Submit another report", use_container_width=True):
         st.session_state.last_submitted = None
         st.rerun()
     st.stop()
@@ -238,7 +237,7 @@ if st.session_state.last_submitted:
 if st.session_state.show_tracking:
     with st.container():
         st.markdown('<div class="section-card">', unsafe_allow_html=True)
-        st.markdown("### 📋 Track Your Report")
+        st.markdown("### Track Your Report")
         track_id = st.text_input("Enter your Report ID", placeholder="e.g. CI-2026-A3F7",
                                   key="track_input").strip().upper()
         if st.button("Check Status", key="track_btn"):
@@ -277,11 +276,11 @@ left_col, right_col = st.columns([3, 2], gap="large")
 # ── LEFT: Map ─────────────────────────────────────────────────────────────────
 with left_col:
     st.markdown('<div class="section-card">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">🗺️ Select Location on Map</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Select Location on Map</div>', unsafe_allow_html=True)
     st.markdown('<div class="section-sub">Click anywhere on the NUS campus map to set your issue location</div>', unsafe_allow_html=True)
 
     # OneMap search
-    search_q = st.text_input("🔍 Search campus location", placeholder="e.g. COM2, Central Library, UTown…", label_visibility="collapsed")
+    search_q = st.text_input("Search campus location", placeholder="e.g. COM2, Central Library, UTown…", label_visibility="collapsed")
 
     search_lat, search_lng, search_name = None, None, None
     if search_q and len(search_q) >= 2:
@@ -367,7 +366,7 @@ with left_col:
         st.success(f"📍 **Selected:** {st.session_state.selected_location}  \n"
                    f"`{st.session_state.selected_lat:.5f}°N, {st.session_state.selected_lng:.5f}°E`")
     else:
-        st.info("👆 Click on the map to select your issue location, or tap 📍 to use your current location")
+        st.info("Click on the map to select your issue location, or tap 📍 to use your current location")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -380,7 +379,7 @@ with right_col:
     with st.form("report_form", clear_on_submit=True):
 
         # Photo
-        photo_file = st.file_uploader("📷 Add a photo (optional)",
+        photo_file = st.file_uploader("Add a photo (optional)",
                                        type=["jpg","jpeg","png","webp"],
                                        help="Photos help AI classify the issue more accurately")
         if photo_file:
@@ -391,13 +390,13 @@ with right_col:
         st.text_input("📍 Location (select on map)", value=loc_display, disabled=True)
 
         # Category
-        category = st.selectbox("🏷️ Category", [
+        category = st.selectbox("Category", [
             "Accessibility", "Facilities", "Safety",
             "Cleanliness", "Utilities", "Other",
         ])
 
         # Description
-        description = st.text_area("📄 Description (optional)",
+        description = st.text_area("Description (optional)",
                                     placeholder="Briefly describe the issue…",
                                     max_chars=200,
                                     help="Max 200 characters")
@@ -406,7 +405,7 @@ with right_col:
         st.caption(f"{char_left} characters remaining")
 
         submitted = st.form_submit_button(
-            "🤖 Submit & Analyse with AI",
+            "Submit & Analyse with AI",
             type="primary", use_container_width=True,
         )
 
@@ -425,7 +424,7 @@ with right_col:
                 with open(photo_path, "wb") as f:
                     f.write(image_bytes)
 
-            with st.spinner("🤖 AI is analysing your report… (classifying, checking for duplicates, scoring urgency)"):
+            with st.spinner(" AI is analysing your report… (classifying, checking for duplicates, scoring urgency)"):
                 nearby = get_nearby_reports(
                     st.session_state.selected_lat,
                     st.session_state.selected_lng,
