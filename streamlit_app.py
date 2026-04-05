@@ -69,13 +69,24 @@ st.markdown("""
   .section-card {
     background: rgba(255,255,255,0.10);
     border: 1px solid rgba(255,255,255,0.18);
-    border-radius: 16px; padding: 22px;
+    border-radius: 16px;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     margin-bottom: 16px;
+    overflow: hidden;
   }
-  .section-title { font-size: 16px; font-weight: 700; color: #ffffff; margin-bottom: 4px; }
-  .section-sub   { font-size: 13px; color: rgba(255,255,255,0.65); margin-bottom: 16px; }
+  /* Card header band — title lives here */
+  .card-header {
+    padding: 16px 22px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+  }
+  /* Card body — all other content */
+  .card-body {
+    padding: 18px 22px 22px;
+  }
+  .section-title { font-size: 15px; font-weight: 700; color: #ffffff; margin: 0 0 3px; letter-spacing: 0.2px; }
+  .section-sub   { font-size: 12px; color: rgba(255,255,255,0.55); margin: 0; }
 
   /* Tracking report cards */
   .report-card {
@@ -128,7 +139,7 @@ st.markdown("""
     border-radius: 16px; padding: 18px 22px; margin-top: 0;
     backdrop-filter: blur(8px);
   }
-  .tips-box .section-title { color: #fff; }
+  .tips-box .section-title { color: #fff; margin-bottom: 10px; }
   .tips-box ul { color: rgba(255,255,255,0.7); font-size: 13px; margin: 0; padding-left: 18px; }
   .tips-box ul li { margin-bottom: 6px; }
 
@@ -147,6 +158,16 @@ st.markdown("""
   div[data-testid="stButton"] > button:hover {
     background: rgba(255,255,255,0.2);
     border-color: rgba(255,255,255,0.35);
+  }
+  /* Track button — centered below map */
+  div[data-testid="stButton"] > button[kind="secondary"] {
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 10px; font-weight: 600; color: white;
+    padding: 10px 28px; font-size: 14px;
+  }
+  div[data-testid="stButton"] > button[kind="secondary"]:hover {
+    background: rgba(255,255,255,0.18);
   }
   /* Input fields */
   div[data-testid="stTextInput"] input,
@@ -199,14 +220,6 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# Navigation — Track button only (staff dashboard is staff-only, accessed via its own URL)
-col_nav1, col_nav2 = st.columns([1, 5])
-with col_nav1:
-    if st.button("Track my report", use_container_width=True):
-        st.session_state.show_tracking = not st.session_state.show_tracking
-
-st.divider()
-
 # ── Show success after submission ──────────────────────────────────────────────
 if st.session_state.last_submitted:
     r = st.session_state.last_submitted
@@ -236,8 +249,14 @@ if st.session_state.last_submitted:
 # ── Status Tracking Panel ──────────────────────────────────────────────────────
 if st.session_state.show_tracking:
     with st.container():
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
-        st.markdown("### Track Your Report")
+        st.markdown('''
+        <div class="section-card">
+          <div class="card-header">
+            <div class="section-title">📋 Track Your Report</div>
+            <div class="section-sub">Enter your Report ID to check the current status</div>
+          </div>
+          <div class="card-body">
+        ''', unsafe_allow_html=True)
         track_id = st.text_input("Enter your Report ID", placeholder="e.g. CI-2026-A3F7",
                                   key="track_input").strip().upper()
         if st.button("Check Status", key="track_btn"):
@@ -267,17 +286,22 @@ if st.session_state.show_tracking:
                     st.error("Report not found. Please check the ID.")
             else:
                 st.warning("Please enter a Report ID.")
-        st.markdown('</div>', unsafe_allow_html=True)
-    st.divider()
+        st.markdown('</div></div>', unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
 
 # ── Main layout: Map (left) + Form (right) ────────────────────────────────────
 left_col, right_col = st.columns([3, 2], gap="large")
 
 # ── LEFT: Map ─────────────────────────────────────────────────────────────────
 with left_col:
-    st.markdown('<div class="section-card">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">Select Location on Map</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-sub">Click anywhere on the NUS campus map to set your issue location</div>', unsafe_allow_html=True)
+    st.markdown('''
+    <div class="section-card">
+      <div class="card-header">
+        <div class="section-title">📍 Select Location on Map</div>
+        <div class="section-sub">Click anywhere on the NUS campus map to set your issue location</div>
+      </div>
+      <div class="card-body">
+    ''', unsafe_allow_html=True)
 
     # OneMap search
     search_q = st.text_input("Search campus location", placeholder="e.g. COM2, Central Library, UTown…", label_visibility="collapsed")
@@ -368,13 +392,24 @@ with left_col:
     else:
         st.info("Click on the map to select your issue location, or tap 📍 to use your current location")
 
+    st.markdown('</div></div>', unsafe_allow_html=True)  # close card-body + section-card
+
+    # ── Track my report — centered below map ──────────────────────────────
+    st.markdown('<div style="display:flex;justify-content:center;margin-top:12px;margin-bottom:4px">', unsafe_allow_html=True)
+    if st.button("📋 Track my report", use_container_width=False, key="track_toggle"):
+        st.session_state.show_tracking = not st.session_state.show_tracking
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ── RIGHT: Report Form ─────────────────────────────────────────────────────────
 with right_col:
-    st.markdown('<div class="section-card">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">📝 Report an Issue</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-sub">Fill in the details below and submit</div>', unsafe_allow_html=True)
+    st.markdown('''
+    <div class="section-card">
+      <div class="card-header">
+        <div class="section-title">📝 Report an Issue</div>
+        <div class="section-sub">Fill in the details below and submit</div>
+      </div>
+      <div class="card-body">
+    ''', unsafe_allow_html=True)
 
     with st.form("report_form", clear_on_submit=True):
 
@@ -489,7 +524,7 @@ with right_col:
             st.session_state.selected_location = None
             st.rerun()
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div></div>', unsafe_allow_html=True)  # close card-body + section-card
 
     # Tips box
     st.markdown("""
