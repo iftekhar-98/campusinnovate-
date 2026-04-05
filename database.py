@@ -25,6 +25,7 @@ def init_db():
             location_name        TEXT,
             location_lat         REAL,
             location_lng         REAL,
+            floor_number         TEXT,
             category             TEXT,
             description          TEXT,
             photo_path           TEXT,
@@ -43,6 +44,12 @@ def init_db():
             updated_at           TEXT
         )
     """)
+    # Migration: add floor_number to existing databases that don't have it yet
+    try:
+        conn.execute("ALTER TABLE reports ADD COLUMN floor_number TEXT")
+        conn.commit()
+    except Exception:
+        pass  # Column already exists
     conn.commit()
     conn.close()
 
@@ -57,15 +64,16 @@ def create_report(data: dict) -> dict:
     rid  = _new_id()
     conn.execute("""
         INSERT INTO reports (
-            report_id, location_name, location_lat, location_lng,
+            report_id, location_name, location_lat, location_lng, floor_number,
             category, description, photo_path,
             ai_category, ai_confidence, ai_urgency, ai_summary, ai_urgency_reason,
             is_duplicate, original_report_id, duplicate_cluster_id,
             status, created_at, updated_at
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
         rid,
         data.get("location_name"), data.get("location_lat"), data.get("location_lng"),
+        data.get("floor_number"),
         data.get("category"), data.get("description"), data.get("photo_path"),
         data.get("ai_category"), data.get("ai_confidence"),
         data.get("ai_urgency"), data.get("ai_summary"), data.get("ai_urgency_reason"),
@@ -111,6 +119,24 @@ def get_nearby_reports(lat, lng, radius=0.003) -> list:
     """, (lat, radius, lng, radius)).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+
+def get_similar_reports_count(lat, lng, category, radius=0.005) -> int:
+    """Count reports of the same category near this location in the past 7 days.
+    Used to auto-escalate urgency to High when a cluster is detected (≥2 means cluster)."""
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT location_lat, location_lng FROM reports
+        WHERE category = ?
+          AND created_at >= datetime('now','-7 days')
+          AND location_lat IS NOT NULL
+    """, (category,)).fetchall()
+    conn.close()
+    count = 0
+    for row in rows:
+        if abs(row[0] - lat) < radius and abs(row[1] - lng) < radius:
+            count += 1
+    return count
 
 
 def update_report(report_id, status, department=None, notes=None):
@@ -162,6 +188,7 @@ SAMPLES = [
     {
         "location_name": "COM2 Level 2 · North Wing Corridor",
         "location_lat": 1.2950, "location_lng": 103.7744,
+        "floor_number": "Level 2",
         "category": "Facilities",
         "description": "Water leaking from ceiling tile, puddle forming on floor.",
         "ai_category": "Facilities", "ai_confidence": 0.92, "ai_urgency": "High",
@@ -172,6 +199,7 @@ SAMPLES = [
     {
         "location_name": "ENG1 Ground Floor · Main Entrance",
         "location_lat": 1.2998, "location_lng": 103.7719,
+        "floor_number": "Ground (G)",
         "category": "Safety",
         "description": "Main handle on right door is completely detached. Propped open with a wedge.",
         "ai_category": "Vandalism", "ai_confidence": 0.88, "ai_urgency": "High",
@@ -182,6 +210,7 @@ SAMPLES = [
     {
         "location_name": "LIB Level 3 · Zone A",
         "location_lat": 1.2966, "location_lng": 103.7764,
+        "floor_number": "Level 3",
         "category": "Facilities",
         "description": "Lights flickering in the quiet study zone.",
         "ai_category": "Utilities", "ai_confidence": 0.95, "ai_urgency": "Medium",
@@ -192,6 +221,7 @@ SAMPLES = [
     {
         "location_name": "UTown · Residential College 4",
         "location_lat": 1.3044, "location_lng": 103.7742,
+        "floor_number": "Ground (G)",
         "category": "Cleanliness",
         "description": "Rubbish overflowing from bins near common area.",
         "ai_category": "Cleanliness", "ai_confidence": 0.91, "ai_urgency": "Medium",
@@ -202,6 +232,7 @@ SAMPLES = [
     {
         "location_name": "Science Drive 2 · Block S1",
         "location_lat": 1.2946, "location_lng": 103.7814,
+        "floor_number": "Ground (G)",
         "category": "Accessibility",
         "description": "Ramp near entrance blocked by construction materials.",
         "ai_category": "Accessibility", "ai_confidence": 0.93, "ai_urgency": "High",
@@ -212,6 +243,7 @@ SAMPLES = [
     {
         "location_name": "Yusof Ishak House · Level 1",
         "location_lat": 1.2982, "location_lng": 103.7756,
+        "floor_number": "Level 1",
         "category": "Facilities",
         "description": "Air conditioning not working, temperature very high.",
         "ai_category": "Facilities", "ai_confidence": 0.89, "ai_urgency": "Medium",
@@ -233,14 +265,15 @@ def seed_sample_data():
         conn = get_conn()
         conn.execute("""
             INSERT INTO reports (
-                report_id, location_name, location_lat, location_lng,
+                report_id, location_name, location_lat, location_lng, floor_number,
                 category, description, ai_category, ai_confidence,
                 ai_urgency, ai_summary, ai_urgency_reason,
                 is_duplicate, status, assigned_department, created_at, updated_at
-            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """, (
             _new_id(),
             s["location_name"], s["location_lat"], s["location_lng"],
+            s.get("floor_number"),
             s["category"], s["description"],
             s["ai_category"], s["ai_confidence"], s["ai_urgency"],
             s["ai_summary"], s["ai_urgency_reason"],
