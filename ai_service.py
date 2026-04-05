@@ -131,6 +131,71 @@ report in the same area within the last 24 hours."""
 
 # ── Rule-based fallback ────────────────────────────────────────────────────────
 
+def check_content(description: str, api_key: str = "") -> dict:
+    """
+    Content governance — analyse the description text for appropriateness.
+    Returns {"appropriate": bool, "reason": str}
+
+    What Groq/Llama CAN do:
+      ✅ Analyse description TEXT for spam, abuse, or off-topic content.
+
+    What Groq/Llama CANNOT do:
+      ❌ Analyse uploaded IMAGES — Llama is a text-only model.
+         For image moderation, a vision API such as Google Vision SafeSearch
+         or AWS Rekognition would be required (outside current scope).
+    """
+    text = (description or "").strip()
+
+    # Quick local checks (no API call needed for obvious cases)
+    import re
+    if len(text) < 10:
+        return {"appropriate": False,
+                "reason": "Description is too short. Please provide at least a brief description of the issue."}
+
+    spam_re = [r"^(.)\1{9,}$", r"^[^a-zA-Z\u0080-\uFFFF]{0,3}$",
+               r"(?i)^(test\d*|asdf|qwerty|lorem ipsum|1234|abc)$"]
+    for pat in spam_re:
+        if re.search(pat, text):
+            return {"appropriate": False,
+                    "reason": "Description appears to be a test or spam entry. Please describe a real campus issue."}
+
+    if not api_key:
+        return {"appropriate": True, "reason": ""}
+
+    key = api_key.strip()
+    try:
+        from groq import Groq
+        client = Groq(api_key=key)
+        prompt = f"""You are a content moderator for a university campus issue-reporting system.
+
+Review the description below and decide if it is appropriate for submission.
+
+Description: "{text}"
+
+APPROPRIATE: describes a genuine campus issue in any language (cleanliness, safety, facilities, IT, landscaping, noise, accessibility, vandalism, etc.)
+INAPPROPRIATE: offensive/abusive language, threats, obvious spam, or completely unrelated to any campus facility.
+
+Respond ONLY with JSON, no markdown:
+{{"appropriate": true, "reason": ""}}
+or
+{{"appropriate": false, "reason": "<brief, user-friendly explanation>"}}"""
+
+        resp = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=80,
+            temperature=0.0,
+        )
+        import json, re as _re
+        raw = _re.sub(r"```json\s*|\s*```", "", resp.choices[0].message.content.strip()).strip()
+        result = json.loads(raw)
+        return {"appropriate": bool(result.get("appropriate", True)),
+                "reason": result.get("reason", "")}
+    except Exception as e:
+        print(f"[ai_service.check_content] {e}")
+        return {"appropriate": True, "reason": ""}   # fail open
+
+
 def _fallback(category: str, description: str, location_name: str) -> dict:
     """Keyword-based classifier used when the API is unavailable."""
     text    = (description or "").lower()
