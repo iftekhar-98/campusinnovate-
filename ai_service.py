@@ -134,15 +134,11 @@ report in the same area within the last 24 hours."""
 def check_image_content(image_bytes: bytes, gemini_api_key: str = "") -> dict:
     """
     Image content governance using Google Gemini Vision (gemini-1.5-flash).
-
-    Checks TWO things:
-      1. Is the image appropriate? (no offensive/disturbing content)
-      2. Is the image relevant? (actually shows a campus facility issue)
-
+    Two separate checks so Gemini can't conflate them:
+      Step 1 — Is it appropriate? (no offensive/adult content)
+      Step 2 — Is it relevant?   (must visibly show a campus facility issue)
     Returns: {"appropriate": bool, "reason": str}
-
-    Falls back to {"appropriate": True} if no key is configured,
-    so the form never breaks if Gemini is unavailable.
+    Fails open if key is missing or API errors, so students are never blocked by outages.
     """
     if not image_bytes or not gemini_api_key.strip():
         return {"appropriate": True, "reason": ""}
@@ -150,49 +146,89 @@ def check_image_content(image_bytes: bytes, gemini_api_key: str = "") -> dict:
     try:
         import google.generativeai as genai
         from PIL import Image
-        import io
+        import io, re, json
 
-        # ── Configure Gemini with the key ──────────────────────────────
         genai.configure(api_key=gemini_api_key.strip())
         model = genai.GenerativeModel("gemini-1.5-flash")
-
-        # ── Convert bytes → PIL Image (what Gemini Vision expects) ─────
         image = Image.open(io.BytesIO(image_bytes))
 
-        prompt = """You are a content moderator for a university campus issue-reporting system.
+        # ── Step 1: Appropriateness check ──────────────────────────────
+        prompt_safe = """Look at this image carefully.
 
-A student has uploaded a photo to accompany a maintenance/facility report.
+Does it contain ANY of the following? Answer only YES or NO, then a dash, then one sentence reason.
+- Nudity or sexual content
+- Graphic violence, blood, or gore
+- Hate symbols or extremist content
+- Personally identifiable information (faces, ID cards, screens with personal data)
 
-Evaluate this image on TWO criteria:
+Format: YES - reason   OR   NO - reason"""
 
-1. APPROPRIATENESS: Does it contain offensive, disturbing, violent, or adult content?
-2. RELEVANCE: Does it plausibly show a campus environment or a physical issue
-   (e.g. a broken door, water leak, dirty area, damaged equipment, blocked ramp,
-   faulty light, vandalism, overflowing bin, etc.)?
-   Accept photos even if blurry or taken from a distance.
-   Reject only if clearly unrelated (selfie, food, meme, screenshot, etc.).
+        resp_safe = model.generate_content([prompt_safe, image])
+        safe_text = resp_safe.text.strip().upper()
+        if safe_text.startswith("YES"):
+            reason = resp_safe.text.strip().split("-", 1)[-1].strip()
+            return {
+                "appropriate": False,
+                "reason": f"Photo contains inappropriate content: {reason}",
+            }
 
-Respond ONLY with JSON — no markdown, no explanation:
-{"appropriate": true, "reason": ""}
+        # ── Step 2: Relevance check ─────────────────────────────────────
+        # Only runs if step 1 passed
+        prompt_relevant = """You are reviewing a photo submitted for a university campus facility issue report.
+
+Your job: decide if this photo is RELEVANT to a campus maintenance or facility issue.
+
+RELEVANT means the photo shows one of these (even partially, even blurry, even from a distance):
+- Physical damage: broken furniture, cracked walls, shattered glass, damaged equipment
+- Cleanliness: overflowing bins, litter, dirty toilets, stains, pest evidence
+- Safety hazards: blocked ramps/exits, missing handrails, flooded floor, exposed wires
+- Infrastructure: faulty lights, broken doors/locks, leaking pipes, non-working lifts
+- IT/facilities: broken screens, damaged lab equipment, disconnected cables
+- Outdoor issues: damaged benches, broken signage, blocked pathways
+- Any photo of a building, corridor, room, or outdoor campus area — even if the issue is subtle
+
+NOT RELEVANT means the photo clearly shows:
+- Clothing, fashion items, or accessories (laid flat, on a person, or on a hanger)
+- Food, drinks, or meals
+- Selfies or portraits with no campus context visible
+- Screenshots, memes, documents, or digital content
+- Animals or nature with no campus context
+- Vehicles with no campus context
+
+Be strict: if the photo clearly does NOT show a campus environment or physical issue, reject it.
+If you are even slightly unsure, ACCEPT it.
+
+Respond ONLY with JSON — no markdown fences:
+{"relevant": true, "reason": ""}
 or
-{"appropriate": false, "reason": "<brief user-friendly explanation>"}"""
+{"relevant": false, "reason": "<one sentence, friendly, telling the student what to upload instead>"}"""
 
-        response = model.generate_content([prompt, image])
-        raw = response.text.strip()
+        resp_rel = model.generate_content([prompt_relevant, image])
+        raw = re.sub(r"```json\s*|\s*```", "", resp_rel.text.strip()).strip()
 
-        # Strip any accidental markdown fences
-        import re, json
-        raw = re.sub(r"```json\s*|\s*```", "", raw).strip()
-        result = json.loads(raw)
+        # Gemini sometimes returns a plain sentence instead of JSON — handle gracefully
+        try:
+            result = json.loads(raw)
+        except json.JSONDecodeError:
+            # If we can't parse it, check if it contains negative signals
+            lower = raw.lower()
+            if any(w in lower for w in ["not relevant", "irrelevant", "false", "reject"]):
+                return {
+                    "appropriate": False,
+                    "reason": "Please upload a photo that shows the actual campus issue you are reporting.",
+                }
+            return {"appropriate": True, "reason": ""}
 
-        return {
-            "appropriate": bool(result.get("appropriate", True)),
-            "reason":      result.get("reason", ""),
-        }
+        if not result.get("relevant", True):
+            reason = result.get("reason", "Please upload a photo that shows the actual campus issue.")
+            return {"appropriate": False, "reason": reason}
+
+        return {"appropriate": True, "reason": ""}
 
     except Exception as e:
         print(f"[ai_service.check_image_content] {e}")
-        return {"appropriate": True, "reason": ""}   # fail open — never block on API error
+        return {"appropriate": True, "reason": ""}   # fail open
+
 
 
 def check_content(description: str, api_key: str = "") -> dict:
