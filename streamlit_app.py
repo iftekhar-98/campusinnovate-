@@ -292,7 +292,6 @@ with left_col:
     st.markdown('''
     <div class="section-title" style="margin-bottom:4px">📍 Select Location on Map</div>
     <div class="section-sub" style="margin-bottom:12px">Click anywhere on the NUS campus map to set your issue location</div>
-    <div class="section-card"><div class="card-body">
     ''', unsafe_allow_html=True)
 
     # OneMap search
@@ -384,9 +383,9 @@ with left_col:
     else:
         st.info("Click on the map to select your issue location, or tap 📍 to use your current location")
 
-    st.markdown('</div></div>', unsafe_allow_html=True)  # close card-body + section-card
 
-    # ── Track my report — centered below map ──────────────────────────────
+
+    # ── Track my report
     st.markdown('<div style="display:flex;justify-content:center;margin-top:12px;margin-bottom:4px">', unsafe_allow_html=True)
     if st.button("📋 Track my report", use_container_width=False, key="track_toggle"):
         st.session_state.show_tracking = not st.session_state.show_tracking
@@ -397,7 +396,6 @@ with right_col:
     st.markdown('''
     <div class="section-title" style="margin-bottom:4px">📝 Report an Issue</div>
     <div class="section-sub" style="margin-bottom:12px">Fill in the details below and submit</div>
-    <div class="section-card"><div class="card-body">
     ''', unsafe_allow_html=True)
 
     with st.form("report_form", clear_on_submit=True):
@@ -513,7 +511,7 @@ with right_col:
             st.session_state.selected_location = None
             st.rerun()
 
-    st.markdown('</div></div>', unsafe_allow_html=True)  # close card-body + section-card
+
 
     # Tips box
     st.markdown("""
