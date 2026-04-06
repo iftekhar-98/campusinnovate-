@@ -256,7 +256,7 @@ if st.session_state.show_tracking:
         st.markdown('''
         <div class="section-card">
           <div class="card-header">
-            <div class="section-title">📋 Track Your Report</div>
+            <div class="section-title"> Track Your Report</div>
             <div class="section-sub">Enter your Report ID to check the current status</div>
           </div>
           <div class="card-body">
@@ -396,7 +396,7 @@ with left_col:
 
     # ── Track my report
     st.markdown('<div style="display:flex;justify-content:center;margin-top:12px;margin-bottom:4px">', unsafe_allow_html=True)
-    if st.button("📋 Track my report", use_container_width=False, key="track_toggle"):
+    if st.button("Track my report", use_container_width=False, key="track_toggle"):
         st.session_state.show_tracking = not st.session_state.show_tracking
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -410,7 +410,7 @@ with right_col:
     with st.form("report_form", clear_on_submit=True):
 
         # Photo — MANDATORY
-        photo_file = st.file_uploader("📷 Photo of the issue *",
+        photo_file = st.file_uploader("Photo of the issue *",
                                        type=["jpg","jpeg","png","webp"],
                                        help="Required — helps AI classify and staff verify the issue")
         if photo_file:
@@ -418,10 +418,10 @@ with right_col:
 
         # Location display (read-only)
         loc_display = st.session_state.selected_location or "No location selected yet"
-        st.text_input("📍 Location (select on map)", value=loc_display, disabled=True)
+        st.text_input(" Location (select on map)", value=loc_display, disabled=True)
 
         # Floor number — NEW
-        floor_number = st.selectbox("🏢 Floor / Level *", [
+        floor_number = st.selectbox("Floor / Level *", [
             "Ground (G)", "Level 1", "Level 2", "Level 3",
             "Level 4", "Level 5", "Level 6+", "Basement (B1)", "Basement (B2)",
         ], help="Required — helps staff locate the issue precisely")
