@@ -306,7 +306,7 @@ with tab_inbox:
             if not title:
                 title = r.get("ai_summary","")[:80] or f"{cat} issue"
 
-            floor_tag = f'<span style="font-size:12px;color:rgba(255,255,255,0.55)">🏢 {r["floor_number"]}</span>' if r.get("floor_number") else ""
+            floor_tag = f'<span style="font-size:12px;color:rgba(255,255,255,0.55)"> {r["floor_number"]}</span>' if r.get("floor_number") else ""
 
             st.markdown(f"""
             <div class="issue-row {urg_border(urg)}">
@@ -377,7 +377,7 @@ with tab_map:
           &nbsp;•&nbsp;
           <span style="color:#666;font-size:11px">{r.get('ai_urgency','')}</span><br><br>
           <b>{r.get('location_name','')}</b>
-          {f'<br><span style="font-size:12px;color:#555">🏢 {r.get("floor_number","")}</span>' if r.get('floor_number') else ''}<br>
+          {f'<br><span style="font-size:12px;color:#555"> {r.get("floor_number","")}</span>' if r.get('floor_number') else ''}<br>
           <span style="font-size:12px;color:#555">{r.get('ai_summary') or r.get('description','')}</span><br><br>
           <span style="font-size:11px;color:#888">Status: {r.get('status','')}</span>
           {f'<br><span style="font-size:11px;color:#888">→ {r.get("assigned_department","")}</span>' if r.get("assigned_department") else ""}
