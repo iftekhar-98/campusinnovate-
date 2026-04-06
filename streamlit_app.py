@@ -12,7 +12,7 @@ import uuid
 from datetime import datetime
 
 from database import init_db, seed_sample_data, create_report, get_nearby_reports, get_report_by_id, get_similar_reports_count
-from ai_service import analyze_report, check_content
+from ai_service import analyze_report, check_content, check_image_content
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -21,12 +21,21 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ── Groq API key — read here in main context where st.secrets is reliable ─────
+# ── API keys — read in main context where st.secrets is fully initialised ─────
+# Rule: ALWAYS read secrets here (not inside helper modules).
+# Pass keys as parameters — never let modules call st.secrets themselves.
+
+_groq_key = ""
+try:
+    _groq_key = st.secrets["GROQ_API_KEY"]
+except Exception:
+    pass  # Groq missing — AI classification falls back to rule-based
+
 _gemini_key = ""
 try:
-    _gemini_key = st.secrets["GROQ_API_KEY"]
+    _gemini_key = st.secrets["GEMINI_API_KEY"]
 except Exception:
-    pass  # Key missing — AI will use rule-based fallback
+    pass  # Gemini missing — image governance is skipped (fail open)
 
 # ── Init DB once ──────────────────────────────────────────────────────────────
 init_db()
@@ -452,7 +461,7 @@ with right_col:
         else:
             # ── Content governance ──────────────────────────────────────
             with st.spinner("Checking content…"):
-                content_check = check_content(description.strip(), api_key=_gemini_key)
+                content_check = check_content(description.strip(), api_key=_groq_key)
             if not content_check.get("appropriate", True):
                 reason = content_check.get("reason", "Description does not appear to describe a genuine campus issue.")
                 st.error(f"⚠️ Your report could not be submitted: {reason}")
@@ -469,6 +478,15 @@ with right_col:
                 with open(photo_path, "wb") as f:
                     f.write(image_bytes)
 
+            # ── Image content governance (Gemini Vision) ────────────────
+            if image_bytes and _gemini_key:
+                with st.spinner("🔍 Checking photo relevance…"):
+                    img_check = check_image_content(image_bytes, gemini_api_key=_gemini_key)
+                if not img_check.get("appropriate", True):
+                    reason = img_check.get("reason", "Photo does not appear to show a campus facility issue.")
+                    st.error(f"⚠️ Photo could not be accepted: {reason}")
+                    st.stop()
+
             with st.spinner(" AI is analysing your report… (classifying, checking for duplicates, scoring urgency)"):
                 nearby = get_nearby_reports(
                     st.session_state.selected_lat,
@@ -478,7 +496,7 @@ with right_col:
                     category, description,
                     st.session_state.selected_location,
                     image_bytes, nearby,
-                    api_key=_gemini_key,
+                    api_key=_groq_key,
                 )
 
             # ── Duplicate cluster → force High urgency ──────────────────
