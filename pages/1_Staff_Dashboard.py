@@ -238,16 +238,16 @@ dup_ratio = round(dups / total * 100, 1) if total else 0
 
 col1, col2, col3, col4 = st.columns(4)
 with col1:
-    st.markdown(f"""<div class="kpi-card kpi-purple"><div class="icon">📡</div>
+    st.markdown(f"""<div class="kpi-card kpi-purple"><div class="icon"></div>
     <div class="lbl">Total Signals</div><div class="val">{total}</div></div>""", unsafe_allow_html=True)
 with col2:
-    st.markdown(f"""<div class="kpi-card kpi-red"><div class="icon">🔥</div>
+    st.markdown(f"""<div class="kpi-card kpi-red"><div class="icon"></div>
     <div class="lbl">High Urgency</div><div class="val">{high_urg}</div></div>""", unsafe_allow_html=True)
 with col3:
-    st.markdown(f"""<div class="kpi-card kpi-orange"><div class="icon">🔁</div>
+    st.markdown(f"""<div class="kpi-card kpi-orange"><div class="icon"></div>
     <div class="lbl">Duplicate Ratio</div><div class="val">{dup_ratio}%</div></div>""", unsafe_allow_html=True)
 with col4:
-    st.markdown(f"""<div class="kpi-card kpi-green"><div class="icon">✅</div>
+    st.markdown(f"""<div class="kpi-card kpi-green"><div class="icon"></div>
     <div class="lbl">Resolved</div><div class="val">{resolved}</div></div>""", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
