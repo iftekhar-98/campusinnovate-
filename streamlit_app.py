@@ -299,7 +299,7 @@ left_col, right_col = st.columns([3, 2], gap="large")
 # ── LEFT: Map ─────────────────────────────────────────────────────────────────
 with left_col:
     st.markdown('''
-    <div class="section-title" style="margin-bottom:4px">📍 Select Location on Map</div>
+    <div class="section-title" style="margin-bottom:4px"> Select Location on Map</div>
     <div class="section-sub" style="margin-bottom:12px">Click anywhere on the NUS campus map to set your issue location</div>
     ''', unsafe_allow_html=True)
 
@@ -403,7 +403,7 @@ with left_col:
 # ── RIGHT: Report Form ─────────────────────────────────────────────────────────
 with right_col:
     st.markdown('''
-    <div class="section-title" style="margin-bottom:4px">📝 Report an Issue</div>
+    <div class="section-title" style="margin-bottom:4px"> Report an Issue</div>
     <div class="section-sub" style="margin-bottom:12px">Fill in the details below and submit</div>
     ''', unsafe_allow_html=True)
 
