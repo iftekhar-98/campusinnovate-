@@ -75,18 +75,13 @@ st.markdown("""
     margin-bottom: 16px;
     overflow: hidden;
   }
-  /* Card header band — title lives here */
-  .card-header {
-    padding: 16px 22px 14px;
-    border-bottom: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.05);
-  }
-  /* Card body — all other content */
+  /* Card body — all content inside the card */
   .card-body {
     padding: 18px 22px 22px;
   }
-  .section-title { font-size: 15px; font-weight: 700; color: #ffffff; margin: 0 0 3px; letter-spacing: 0.2px; }
-  .section-sub   { font-size: 12px; color: rgba(255,255,255,0.55); margin: 0; }
+  /* Section headers — appear outside cards */
+  .section-title { font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: 0.2px; }
+  .section-sub   { font-size: 12px; color: rgba(255,255,255,0.55); }
 
   /* Tracking report cards */
   .report-card {
@@ -295,12 +290,9 @@ left_col, right_col = st.columns([3, 2], gap="large")
 # ── LEFT: Map ─────────────────────────────────────────────────────────────────
 with left_col:
     st.markdown('''
-    <div class="section-card">
-      <div class="card-header">
-        <div class="section-title">📍 Select Location on Map</div>
-        <div class="section-sub">Click anywhere on the NUS campus map to set your issue location</div>
-      </div>
-      <div class="card-body">
+    <div class="section-title" style="margin-bottom:4px">📍 Select Location on Map</div>
+    <div class="section-sub" style="margin-bottom:12px">Click anywhere on the NUS campus map to set your issue location</div>
+    <div class="section-card"><div class="card-body">
     ''', unsafe_allow_html=True)
 
     # OneMap search
@@ -403,12 +395,9 @@ with left_col:
 # ── RIGHT: Report Form ─────────────────────────────────────────────────────────
 with right_col:
     st.markdown('''
-    <div class="section-card">
-      <div class="card-header">
-        <div class="section-title">📝 Report an Issue</div>
-        <div class="section-sub">Fill in the details below and submit</div>
-      </div>
-      <div class="card-body">
+    <div class="section-title" style="margin-bottom:4px">📝 Report an Issue</div>
+    <div class="section-sub" style="margin-bottom:12px">Fill in the details below and submit</div>
+    <div class="section-card"><div class="card-body">
     ''', unsafe_allow_html=True)
 
     with st.form("report_form", clear_on_submit=True):
