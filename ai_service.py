@@ -131,6 +131,70 @@ report in the same area within the last 24 hours."""
 
 # ── Rule-based fallback ────────────────────────────────────────────────────────
 
+def check_image_content(image_bytes: bytes, gemini_api_key: str = "") -> dict:
+    """
+    Image content governance using Google Gemini Vision (gemini-1.5-flash).
+
+    Checks TWO things:
+      1. Is the image appropriate? (no offensive/disturbing content)
+      2. Is the image relevant? (actually shows a campus facility issue)
+
+    Returns: {"appropriate": bool, "reason": str}
+
+    Falls back to {"appropriate": True} if no key is configured,
+    so the form never breaks if Gemini is unavailable.
+    """
+    if not image_bytes or not gemini_api_key.strip():
+        return {"appropriate": True, "reason": ""}
+
+    try:
+        import google.generativeai as genai
+        from PIL import Image
+        import io
+
+        # ── Configure Gemini with the key ──────────────────────────────
+        genai.configure(api_key=gemini_api_key.strip())
+        model = genai.GenerativeModel("gemini-1.5-flash")
+
+        # ── Convert bytes → PIL Image (what Gemini Vision expects) ─────
+        image = Image.open(io.BytesIO(image_bytes))
+
+        prompt = """You are a content moderator for a university campus issue-reporting system.
+
+A student has uploaded a photo to accompany a maintenance/facility report.
+
+Evaluate this image on TWO criteria:
+
+1. APPROPRIATENESS: Does it contain offensive, disturbing, violent, or adult content?
+2. RELEVANCE: Does it plausibly show a campus environment or a physical issue
+   (e.g. a broken door, water leak, dirty area, damaged equipment, blocked ramp,
+   faulty light, vandalism, overflowing bin, etc.)?
+   Accept photos even if blurry or taken from a distance.
+   Reject only if clearly unrelated (selfie, food, meme, screenshot, etc.).
+
+Respond ONLY with JSON — no markdown, no explanation:
+{"appropriate": true, "reason": ""}
+or
+{"appropriate": false, "reason": "<brief user-friendly explanation>"}"""
+
+        response = model.generate_content([prompt, image])
+        raw = response.text.strip()
+
+        # Strip any accidental markdown fences
+        import re, json
+        raw = re.sub(r"```json\s*|\s*```", "", raw).strip()
+        result = json.loads(raw)
+
+        return {
+            "appropriate": bool(result.get("appropriate", True)),
+            "reason":      result.get("reason", ""),
+        }
+
+    except Exception as e:
+        print(f"[ai_service.check_image_content] {e}")
+        return {"appropriate": True, "reason": ""}   # fail open — never block on API error
+
+
 def check_content(description: str, api_key: str = "") -> dict:
     """
     Content governance — analyse the description text for appropriateness.
